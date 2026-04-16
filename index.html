@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光的飛行航程 · 製作進度追蹤</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #faf9f6;
+  --card: #ffffff;
+  --dark: #2a2418;
+  --mid: #3a3020;
+  --gold: #c9963a;
+  --gold-soft: #e8c97a;
+  --terra: #c07a5a;
+  --terra-soft: #f0c8b0;
+  --sage: #6a8a4a;
+  --sage-soft: #c8d8a8;
+  --text: #2d2820;
+  --text-mid: #6a6055;
+  --text-mute: #a09888;
+  --border: #e8e0d5;
+  --cream: #f5f0e6;
+  --shadow: 0 2px 10px rgba(42,36,24,0.09);
+  --radius: 12px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Helvetica Neue', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* ── Header ── */
+.app-header {
+  background: var(--dark);
+  padding: 28px 32px 22px;
+}
+.header-inner { max-width: 1200px; margin: 0 auto; }
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 16px;
+}
+.header-title .en {
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold-soft);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.header-title h1 {
+  font-size: 22px;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.header-title .sub {
+  font-size: 11px;
+  color: var(--text-mute);
+  letter-spacing: 1px;
+}
+.admin-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.55);
+  padding: 7px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.admin-btn:hover { border-color: var(--gold-soft); color: var(--gold-soft); }
+.admin-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+.overall-progress {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.progress-meta span { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 1px; }
+.progress-meta strong { font-size: 18px; color: var(--gold-soft); font-weight: 700; }
+.progress-track {
+  height: 5px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--terra), var(--gold), var(--gold-soft));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+/* ── Stats Bar ── */
+.stats-bar {
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 32px;
+}
+.stats-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-mid);
+}
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+.stat-dot.done   { background: var(--gold); }
+.stat-dot.active { background: var(--sage); }
+.stat-dot.idle   { background: var(--border); }
+.stat-num { font-weight: 700; color: var(--text); }
+.step-count { margin-left: auto; font-size: 12px; color: var(--text-mute); }
+
+/* ── Main ── */
+.main { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+
+/* ── Episode Grid ── */
+.ep-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 1000px) { .ep-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 680px)  { .ep-grid { grid-template-columns: repeat(2, 1fr); } .main { padding: 16px; } }
+
+/* ── Episode Card ── */
+.ep-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 13px 13px 11px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  position: relative;
+}
+.ep-card:hover          { border-color: var(--gold-soft); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(42,36,24,0.12); }
+.ep-card.status-done    { border-color: var(--gold); }
+.ep-card.status-active  { border-color: var(--sage); }
+.ep-card.is-open        { border-color: var(--dark); box-shadow: 0 6px 24px rgba(42,36,24,0.15); }
+
+.ep-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+.ep-badge {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: var(--gold-soft);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ep-card.status-done  .ep-badge { background: var(--gold); color: #fff; }
+.ep-card.status-active .ep-badge { background: var(--sage); color: #fff; }
+
+.ep-info { flex: 1; min-width: 0; }
+.ep-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.ep-teacher { font-size: 11px; color: var(--text-mute); margin-top: 1px; }
+.ep-keyword { font-size: 10px; color: var(--terra); font-style: italic; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.ep-bar-wrap { margin-bottom: 7px; }
+.ep-bar-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.ep-bar-fill  { height: 100%; border-radius: 2px; transition: width 0.4s; background: linear-gradient(90deg, var(--terra), var(--gold)); }
+.ep-card.status-done .ep-bar-fill { background: var(--gold); }
+.ep-card.status-active .ep-bar-fill { background: var(--sage); }
+
+.ep-foot { display: flex; justify-content: space-between; align-items: center; }
+.ep-pct  { font-size: 11px; color: var(--text-mute); }
+.ep-badge-status { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.ep-badge-status.done   { background: #fff8ec; color: var(--gold); }
+.ep-badge-status.active { background: #eef8ee; color: var(--sage); }
+.ep-badge-status.idle   { background: var(--cream); color: var(--text-mute); }
+
+/* ── Expanded Detail ── */
+.ep-detail {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(42,36,24,0.12);
+  margin-bottom: 20px;
+  overflow: hidden;
+  display: none;
+  border: 1px solid var(--border);
+}
+.ep-detail.visible { display: block; }
+
+.detail-header {
+  background: var(--dark);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.detail-badge {
+  width: 44px; height: 44px;
+  background: var(--gold);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700;
+  flex-shrink: 0;
+}
+.detail-title { flex: 1; }
+.detail-title h2 { font-size: 20px; color: #fff; font-weight: 700; }
+.detail-title .meta { font-size: 12px; color: var(--gold-soft); margin-top: 3px; }
+.detail-pct-wrap { text-align: right; }
+.detail-pct { font-size: 26px; font-weight: 700; color: var(--gold-soft); line-height: 1; }
+.detail-pct-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+.detail-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 14px; }
+.detail-bar-fill { height: 100%; background: linear-gradient(90deg, var(--terra), var(--gold-soft)); border-radius: 2px; transition: width 0.5s; }
+
+.detail-body { padding: 20px 24px; }
+.admin-notice {
+  background: #fff8ec;
+  border: 1px solid var(--gold-soft);
+  color: var(--gold);
+  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* Phase Section */
+.phase-section { margin-bottom: 20px; }
+.phase-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+.phase-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.phase-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mid); }
+.phase-name  { font-size: 11px; color: var(--text-mute); }
+
+/* Step Item */
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+.step-item.is-next {
+  background: #fff8ec;
+  border-left-color: var(--gold);
+}
+.step-item.is-done { opacity: 0.5; }
+.step-item:hover:not(.is-done) { background: var(--cream); }
+
+.step-check {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: #fff;
+  transition: all 0.15s;
+}
+.step-check:hover { border-color: var(--gold); }
+.step-check.checked { background: var(--gold); border-color: var(--gold); }
+.step-check.checked svg { display: block; }
+.step-check svg { display: block; width: 11px; height: 11px; }
+
+.step-body { flex: 1; min-width: 0; }
+.step-text { font-size: 13px; color: var(--text); line-height: 1.45; }
+.step-item.is-done .step-text { text-decoration: line-through; color: var(--text-mute); }
+.step-desc { font-size: 11px; color: var(--text-mute); font-style: italic; margin-top: 3px; }
+.next-tag {
+  display: inline-block;
+  font-size: 9px;
+  background: var(--gold);
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-right: 5px;
+  vertical-align: middle;
+  letter-spacing: 0.5px;
+}
+
+.step-by {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-by.client { background: #fff0e8; color: var(--terra); }
+.step-by.peiyi  { background: #eef8ee; color: var(--sage); }
+.step-by.both   { background: var(--cream); color: var(--text-mid); }
+
+/* Edit mode textarea */
+.step-edit {
+  width: 100%;
+  border: 1px solid var(--gold-soft);
+  border-radius: 5px;
+  background: rgba(201,150,58,0.04);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.45;
+  font-family: inherit;
+  padding: 4px 6px;
+  resize: vertical;
+  min-height: 38px;
+  outline: none;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px auto 4px;
+  background: var(--cream);
+  border: none;
+  color: var(--text-mid);
+  cursor: pointer;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.close-btn:hover { background: var(--border); }
+
+/* ── Flow Reference ── */
+.flow-ref {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow);
+  margin-top: 8px;
+}
+.section-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.phases-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+@media (max-width: 768px) { .phases-grid { grid-template-columns: repeat(2, 1fr); } }
+.phase-ref-card { background: var(--cream); border-radius: 8px; padding: 13px; }
+.phase-ref-title {
+  font-size: 11px;
+  font-weight: 700;
+  padding-bottom: 7px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid;
+}
+.phase-ref-step {
+  font-size: 11px;
+  color: var(--text-mid);
+  padding: 3px 0;
+  padding-left: 10px;
+  position: relative;
+  line-height: 1.4;
+}
+.phase-ref-step::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: var(--text-mute);
+}
+
+/* ── Admin Modal ── */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-bg.visible { display: flex; }
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 300px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+}
+.modal-box h3 { font-size: 17px; margin-bottom: 6px; color: var(--dark); }
+.modal-box p  { font-size: 12px; color: var(--text-mute); margin-bottom: 18px; line-height: 1.6; }
+.modal-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 6px;
+  margin-bottom: 12px;
+  outline: none;
+  font-family: monospace;
+  transition: border-color 0.2s;
+}
+.modal-input:focus { border-color: var(--gold); }
+.modal-input.err   { border-color: #e05a5a; animation: shake 0.3s; }
+@keyframes shake {
+  0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-6px) } 75%{ transform:translateX(6px) }
+}
+.modal-submit {
+  width: 100%;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  padding: 11px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.modal-submit:hover { background: var(--terra); }
+.modal-cancel {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-mute);
+  font-size: 12px;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 4px;
+  font-family: inherit;
+}
+
+/* ── Completion Banner ── */
+.done-banner {
+  background: linear-gradient(135deg, #fff8ec, #fffbf0);
+  border: 1.5px solid var(--gold-soft);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  display: none;
+}
+.done-banner.visible { display: flex; }
+.done-banner-icon { font-size: 24px; }
+.done-banner-text h4 { font-size: 14px; color: var(--gold); font-weight: 700; }
+.done-banner-text p  { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+
+/* ── Custom Step Controls ── */
+.add-step-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 14px;
+  background: none;
+  border: 1.5px dashed var(--gold-soft);
+  color: var(--gold);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.15s;
+}
+.add-step-btn:hover { background: rgba(201,150,58,0.07); }
+.step-del-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-mute);
+  border-radius: 4px;
+  width: 20px; height: 20px;
+  font-size: 9px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.15s;
+  font-family: inherit;
+  padding: 0;
+  line-height: 1;
+}
+.step-del-btn:hover { border-color: #e05a5a; color: #e05a5a; background: #fff5f5; }
+.step-item.is-custom { border-left: 3px solid var(--gold-soft) !important; }
+.step-by-select {
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--text-mid);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  height: 22px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Tab Navigation ── */
+.tab-nav {
+  background: var(--dark);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.tab-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.42);
+  padding: 14px 22px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: rgba(255,255,255,0.7); }
+.tab-btn.active { color: var(--gold-soft); border-bottom-color: var(--gold); }
+.tab-btn .tab-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin-right: 7px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tab-btn.active .tab-dot { opacity: 1; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.tab-icon { display: none; }
+
+/* ── Mobile Bottom Tab Nav ── */
+@media (max-width: 768px) {
+  body { padding-bottom: 74px; }
+  .tab-nav {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0;
+    left: 0; right: 0;
+    z-index: 200;
+    padding: 0;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    border-bottom: none;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+  }
+  .tab-nav-inner {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100% !important;
+    margin: 0;
+  }
+  .tab-btn {
+    flex-direction: column !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px;
+    padding: 9px 4px 12px !important;
+    font-size: 10px !important;
+    border-bottom: none !important;
+    border-top: 2px solid transparent;
+    letter-spacing: 0 !important;
+  }
+  .tab-btn.active {
+    border-top-color: var(--gold) !important;
+    border-bottom-color: transparent !important;
+  }
+  .tab-dot  { display: none !important; }
+  .tab-icon { display: block !important; width: 20px; height: 20px; }
+}
+
+/* ── Schedule Section ── */
+.schedule-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow);
+  margin-top: 16px;
+}
+.schedule-ep-row {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.schedule-ep-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: var(--cream);
+}
+.schedule-ep-head-info { flex: 1; }
+.schedule-ep-head-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.schedule-ep-head-sub  { font-size: 11px; color: var(--text-mute); margin-top: 1px; }
+
+.schedule-meetings {
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 860px) { .schedule-meetings { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .schedule-meetings { grid-template-columns: 1fr; } }
+
+.meeting-card {
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--cream);
+  border-left: 3px solid var(--border);
+}
+.meeting-card.status-today   { border-left-color: var(--gold);  background: #fff8ec; }
+.meeting-card.status-soon    { border-left-color: var(--terra); background: #fff5f0; }
+.meeting-card.status-done    { border-left-color: var(--border); opacity: 0.58; }
+.meeting-card.status-confirm { border-left-color: var(--sage);  background: #f4f9f0; }
+.meeting-card.status-pending { border-left-color: var(--border); background: var(--bg); }
+
+.meeting-num  { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-mute); margin-bottom: 3px; text-transform: uppercase; }
+.meeting-name { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 6px; line-height: 1.35; }
+.meeting-date { font-size: 12px; color: var(--text-mid); font-variant-numeric: tabular-nums; }
+.meeting-time { font-size: 10px; color: var(--text-mute); margin-top: 1px; }
+.meeting-status-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+.badge-today   { background: var(--gold);        color: #fff; }
+.badge-soon    { background: var(--terra-soft);   color: var(--terra); }
+.badge-done    { background: var(--border);       color: var(--text-mute); }
+.badge-confirm { background: var(--sage-soft);    color: var(--sage); }
+.badge-pending { background: var(--cream); color: var(--text-mute); border: 1px dashed var(--border); }
+
+.meeting-date-input {
+  width: 100%;
+  margin-top: 7px;
+  border: 1px solid var(--gold-soft);
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--text);
+  font-family: inherit;
+  background: rgba(201,150,58,0.05);
+  outline: none;
+  cursor: pointer;
+}
+.meeting-date-input:focus { border-color: var(--gold); }
+
+.schedule-pending-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.schedule-pending-title {
+  font-size: 10px;
+  color: var(--text-mute);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.pending-ep-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pending-ep-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cream);
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  padding: 6px 13px;
+  font-size: 11px;
+  color: var(--text-mute);
+}
+.pending-ep-chip strong { color: var(--text-mid); font-weight: 600; }
+.pending-date-input {
+  border: 1px solid var(--gold-soft);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 10px;
+  color: var(--text);
+  background: rgba(201,150,58,0.05);
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.pending-date-input:focus { border-color: var(--gold); }
+
+/* ── Meeting name admin input ── */
+.meeting-name-input {
+  width: 100%;
+  border: 1px solid var(--gold-soft);
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+  background: rgba(201,150,58,0.07);
+  outline: none;
+  margin-bottom: 4px;
+  cursor: text;
+}
+.meeting-name-input:focus { border-color: var(--gold); background: rgba(255,251,240,0.9); }
+
+/* ── Drag-to-reorder ── */
+.drag-handle {
+  color: var(--text-mute);
+  font-size: 16px;
+  cursor: grab;
+  padding: 0 4px;
+  user-select: none;
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.step-item:hover .drag-handle { opacity: 1; }
+.step-item.dragging { opacity: 0.4; box-shadow: 0 4px 16px rgba(201,150,58,0.25); }
+.step-item.drag-over { outline: 2px dashed var(--gold); outline-offset: 2px; background: rgba(201,150,58,0.06); }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="header-title">
+        <div class="en">Light Flight · Production Tracker</div>
+        <h1>《光的飛行航程》製作進度追蹤</h1>
+        <div class="sub">光種子 Light Seed IP × 兒童光團隊 · 2026</div>
+      </div>
+      <button class="admin-btn" id="adminBtn" onclick="openAdmin()">🔒 管理員</button>
+    </div>
+    <div class="overall-progress">
+      <div class="progress-meta">
+        <span id="stepLabel">整體完成度</span>
+        <strong id="overallPct">0%</strong>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="overallFill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ STATS ══ -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-chip"><div class="stat-dot done"></div><span class="stat-num" id="sDone">0</span>&nbsp;集已完成</div>
+    <div class="stat-chip"><div class="stat-dot active"></div><span class="stat-num" id="sActive">0</span>&nbsp;集進行中</div>
+    <div class="stat-chip"><div class="stat-dot idle"></div><span class="stat-num" id="sIdle">0</span>&nbsp;集未開始</div>
+    <div class="step-count" id="stepCount">0 / 144 步驟</div>
+  </div>
+</div>
+
+<!-- ══ TAB NAV ══ -->
+<div class="tab-nav" id="tabNav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" data-tab="schedule" onclick="switchTab('schedule')">
+      <svg class="tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="16" height="14" rx="2"/><line x1="6" y1="2" x2="6" y2="6"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="2" y1="9" x2="18" y2="9"/></svg>
+      <span class="tab-dot"></span>開會期程
+    </button>
+    <button class="tab-btn" data-tab="tracker" onclick="switchTab('tracker')">
+      <svg class="tab-icon" viewBox="0 0 20 20" fill="currentColor"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      <span class="tab-dot"></span>製作進度
+    </button>
+    <button class="tab-btn" data-tab="flow" onclick="switchTab('flow')">
+      <svg class="tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/><circle cx="3" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="3" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="3" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg>
+      <span class="tab-dot"></span>流程說明
+    </button>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <!-- ── Panel: 開會期程表 ── -->
+  <div id="panelSchedule" class="tab-panel active">
+    <div class="schedule-section" style="margin-top:0;">
+      <div class="section-head">開會期程表 · Meeting Schedule</div>
+      <div id="scheduleList"></div>
+    </div>
+  </div>
+
+  <!-- ── Panel: 製作進度 ── -->
+  <div id="panelTracker" class="tab-panel">
+    <div class="ep-grid" id="epGrid"></div>
+    <div class="ep-detail" id="epDetail"></div>
+  </div>
+
+  <!-- ── Panel: 流程說明 ── -->
+  <div id="panelFlow" class="tab-panel">
+    <iframe id="flowFrame" style="width:100%;border:none;display:block;border-radius:10px;min-height:600px;"
+      onload="autoResizeFrame(this)"></iframe>
+  </div>
+
+</main>
+
+<!-- ══ ADMIN MODAL ══ -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal-box">
+    <h3>🔒 管理員模式</h3>
+    <p>沛儀專用。輸入密碼後可編輯步驟內文、備註，以及完整打卡操作。</p>
+    <input class="modal-input" type="password" id="pwdInput" placeholder="●●●●"
+      maxlength="10" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="modal-submit" onclick="doLogin()">確認進入</button>
+    <button class="modal-cancel" onclick="closeAdmin()">取消</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+
+const ADMIN_PWD = "0924";   // ← 管理員密碼（可修改）
+
+const EPISODES = [
+  { id:0,  name:"光種子",  keyword:"最初的最初",             teacher:"沛儀"      },
+  { id:1,  name:"白光",    keyword:"淨化、保護",              teacher:"圓清"      },
+  { id:2,  name:"金光",    keyword:"轉化、目標完成",           teacher:"明心"      },
+  { id:3,  name:"藍光",    keyword:"智慧",                    teacher:"白老師"    },
+  { id:4,  name:"綠寶石",  keyword:"創造、溝通",              teacher:"栗子 Liz" },
+  { id:5,  name:"紫光",    keyword:"成為自己的 superstar",    teacher:"良蕙"      },
+  { id:6,  name:"紅寶石",  keyword:"療癒力、健康",            teacher:"Jane"     },
+  { id:7,  name:"橘光",    keyword:"感受力",                  teacher:"寀芸"     },
+  { id:8,  name:"粉紅",    keyword:"天使的愛、包容",           teacher:"小妹"     },
+  { id:9,  name:"紫水晶",  keyword:"勇者、面對的勇氣",         teacher:"朵朵"     },
+  { id:10, name:"薄荷綠",  keyword:"更新、更棒的你",           teacher:"拉拉"     },
+  { id:11, name:"黑光",    keyword:"落地、整合",               teacher:"Vicki"    },
+];
+
+const PHASES = [
+  {
+    id:1, name:"素材收取 & 一對一對談", color:"#c07a5a",
+    steps:[
+      { id:1,  by:"client", text:"老師發送文本 ＋ 第一版錄音",         desc:"文本 (.docx) + 錄音 (.mp3/.wav) 上傳至 Dropbox 資料夾" },
+      { id:2,  by:"both",   text:"沛儀 × 老師 一對一會議（第 1 次）",  desc:"確認腳本方向、角色設定、視覺風格基調" },
+      { id:3,  by:"both",   text:"確認光的核心語境與情緒基調",          desc:"形成共識，作為後續製作依據" },
+    ]
+  },
+  {
+    id:2, name:"Demo 製作 & 核心審查", color:"#c9963a",
+    steps:[
+      { id:4,  by:"peiyi",  text:"文本微調 ＋ 分鏡設計 ＋ Demo 影片製作", desc:"沛儀製作第一版 Demo 影片" },
+      { id:5,  by:"both",   text:"核心甲方審查 Demo（第 2 次會議）",       desc:"全體核心成員觀看並給予反饋" },
+      { id:6,  by:"both",   text:"文本與分鏡確認定稿（修改上限 2 次）",    desc:"完成最終版腳本與分鏡腳本" },
+    ]
+  },
+  {
+    id:3, name:"正式繪製 & 配音協作", color:"#6a8a4a",
+    steps:[
+      { id:7,  by:"client", text:"甲方提供英文翻譯稿",                     desc:"定稿腳本英文版（.docx），用於字幕製作" },
+      { id:8,  by:"both",   text:"插畫正式繪製 ＋ 老師正式配音（雙線並行）", desc:"沛儀繪製 & 老師重新正式錄音，同步進行" },
+      { id:9,  by:"both",   text:"插畫完成後靜態畫面審查（第 3 次會議）",   desc:"確認插畫風格與腳本匹配" },
+    ]
+  },
+  {
+    id:4, name:"影音整合 & 最終交付", color:"#2a2418",
+    steps:[
+      { id:10, by:"peiyi",  text:"整合配音 ＋ 字幕 ＋ 音樂，製作 IG 短影音", desc:"沛儀完成完整影片與 IG 短版" },
+      { id:11, by:"both",   text:"最終版 ＋ IG 短影音同場確認（第 4 次會議）", desc:"最後一次共同確認" },
+      { id:12, by:"peiyi",  text:"1 次整體修正後，正式交付",                  desc:"交付內容：影片、錄音檔（正式配音版）、IG 短影音（影片超過平台長度限制時）；上傳至 Dropbox 最終資料夾" },
+    ]
+  },
+];
+
+const TOTAL_STEPS = 12;
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+
+let S = {
+  checked: {},           // "ep{id}_s{id}" or "ep{id}_cs_{csId}" → true
+  customText: {},        // "ph{id}_s{id}" → string
+  schedule: {},          // ep_id → ["2026-04-19", ...] (4 dates)
+  customSteps: [],       // [{id:'cs1', phId:2, text:'...', desc:'', by:'both'}]
+  customStepsNext: 1,    // counter for generating unique IDs
+  adminMode: false,
+  openEp: null,
+  activeTab: "schedule",
+  flowText: {},          // data-fk key → edited text (for 流程說明 admin editing)
+  meetingNames: {},      // meeting index (0-3) → custom name string
+  stepOrder: {},         // phId → ordered array of step IDs (numbers/strings)
+};
+
+function initState() {
+  try {
+    const raw = localStorage.getItem("lf_tracker_v3");
+    if (raw) {
+      const d = JSON.parse(raw);
+      S.checked          = d.checked          || {};
+      S.customText       = d.customText       || {};
+      S.schedule         = d.schedule         || {};
+      S.customSteps      = d.customSteps      || [];
+      S.customStepsNext  = d.customStepsNext  || 1;
+      S.flowText         = d.flowText         || {};
+      S.meetingNames     = d.meetingNames     || {};
+      S.stepOrder        = d.stepOrder        || {};
+      // Apply custom texts back to PHASES
+      Object.entries(S.customText).forEach(([k, v]) => {
+        const m = k.match(/ph(\d+)_s(\d+)/);
+        if (m) {
+          const ph = PHASES.find(p => p.id === +m[1]);
+          if (ph) { const st = ph.steps.find(s => s.id === +m[2]); if (st) st.text = v; }
+        }
+      });
+    }
+  } catch(e) {}
+
+  // Seed: ep0 全部完成
+  PHASES.forEach(ph => ph.steps.forEach(st => {
+    const k = `ep0_s${st.id}`;
+    if (S.checked[k] === undefined) S.checked[k] = true;
+  }));
+  // Seed: ep1 step 1 完成
+  if (S.checked["ep1_s1"] === undefined) S.checked["ep1_s1"] = true;
+
+  // ep1 (白光) 開會日程（確認版）
+  if (!S.schedule[1]) S.schedule[1] = ["2026-04-19", "2026-05-03", "2026-05-24", "2026-06-14"];
+}
+
+function persist() {
+  try {
+    localStorage.setItem("lf_tracker_v3", JSON.stringify({
+      checked: S.checked,
+      customText: S.customText,
+      schedule: S.schedule,
+      customSteps: S.customSteps,
+      customStepsNext: S.customStepsNext,
+      flowText: S.flowText,
+      meetingNames: S.meetingNames,
+      stepOrder: S.stepOrder,
+    }));
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+//  CALCULATIONS
+// ══════════════════════════════════════════
+
+function epProgress(id) {
+  let done = 0, total = TOTAL_STEPS;
+  PHASES.forEach(ph => ph.steps.forEach(st => {
+    if (S.checked[`ep${id}_s${st.id}`]) done++;
+  }));
+  S.customSteps.forEach(cs => {
+    total++;
+    if (S.checked[`ep${id}_cs_${cs.id}`]) done++;
+  });
+  return { done, total, pct: total > 0 ? Math.round(done / total * 100) : 0 };
+}
+
+function epStatus(id) {
+  const { done, total } = epProgress(id);
+  if (done === 0)     return "idle";
+  if (done === total) return "done";
+  return "active";
+}
+
+function nextStep(epId) {
+  for (const ph of PHASES) {
+    for (const st of ph.steps)
+      if (!S.checked[`ep${epId}_s${st.id}`]) return { ph, st, isCustom: false };
+    for (const cs of S.customSteps.filter(c => c.phId === ph.id))
+      if (!S.checked[`ep${epId}_cs_${cs.id}`]) return { ph, st: cs, isCustom: true };
+  }
+  return null;
+}
+
+function overallStats() {
+  let totalDone = 0, totalAll = 0, done = 0, active = 0, idle = 0;
+  EPISODES.forEach(ep => {
+    const p = epProgress(ep.id);
+    totalDone += p.done;
+    totalAll  += p.total;
+    const s = epStatus(ep.id);
+    if (s === "done")   done++;
+    else if (s === "active") active++;
+    else idle++;
+  });
+  return { totalDone, totalAll, pct: Math.round(totalDone / totalAll * 100), done, active, idle };
+}
+
+// ══════════════════════════════════════════
+//  RENDER HELPERS
+// ══════════════════════════════════════════
+
+const BY_LABEL = {
+  client: '<span class="step-by client">甲方</span>',
+  peiyi:  '<span class="step-by peiyi">沛儀</span>',
+  both:   '<span class="step-by both">共同</span>',
+};
+
+function renderGrid() {
+  document.getElementById("epGrid").innerHTML = EPISODES.map(ep => {
+    const { done, total, pct } = epProgress(ep.id);
+    const st = epStatus(ep.id);
+    const badgeTxt = st === "done" ? "● 已完成" : st === "active" ? "● 進行中" : "未開始";
+    const isOpen = S.openEp === ep.id;
+    return `
+<div class="ep-card status-${st} ${isOpen ? "is-open" : ""}" onclick="selectEp(${ep.id})">
+  <div class="ep-top">
+    <div class="ep-badge">${ep.id}</div>
+    <div class="ep-info">
+      <div class="ep-name">${ep.name}</div>
+      <div class="ep-teacher">${ep.teacher}</div>
+      <div class="ep-keyword">${ep.keyword}</div>
+    </div>
+  </div>
+  <div class="ep-bar-wrap">
+    <div class="ep-bar-track"><div class="ep-bar-fill" style="width:${pct}%"></div></div>
+  </div>
+  <div class="ep-foot">
+    <span class="ep-pct">${done}/${total}</span>
+    <span class="ep-badge-status ${st}">${badgeTxt}</span>
+  </div>
+</div>`;
+  }).join("");
+}
+
+function renderDetail(epId) {
+  const detail = document.getElementById("epDetail");
+  if (epId === null) { detail.classList.remove("visible"); return; }
+
+  const ep  = EPISODES.find(e => e.id === epId);
+  const { done, total, pct } = epProgress(epId);
+  const next = nextStep(epId);
+
+  const phasesHtml = PHASES.map(ph => {
+    const orderedIds = getPhaseStepOrder(ph.id);
+    const dragHandle = S.adminMode
+      ? `<div class="drag-handle" title="拖拉調整順序">⠿</div>`
+      : "";
+
+    const stepsHtml = orderedIds.map(sid => {
+      // ── Built-in step ──
+      const isBuiltIn = typeof sid === "number" || (typeof sid === "string" && !sid.startsWith("cs"));
+      if (isBuiltIn) {
+        const st = ph.steps.find(s => s.id === +sid || s.id === sid);
+        if (!st) return "";
+        const key     = `ep${epId}_s${st.id}`;
+        const checked = !!S.checked[key];
+        const isNext  = next && !next.isCustom && next.st.id === st.id;
+
+        let textHtml;
+        if (S.adminMode) {
+          textHtml = `<textarea class="step-edit" rows="2"
+            onchange="editText(${ph.id},${st.id},this.value)">${st.text}</textarea>`;
+        } else {
+          textHtml = `<span class="step-text">${isNext ? '<span class="next-tag">下一步</span>' : ""}${st.text}</span>`;
+        }
+
+        const dragAttrs = S.adminMode
+          ? `draggable="true"
+             ondragstart="stepDragStart(event,${ph.id},${st.id})"
+             ondragend="stepDragEnd(event)"
+             ondragover="stepDragOver(event)"
+             ondragleave="stepDragLeave(event)"
+             ondrop="stepDrop(event,${ph.id},${st.id})"`
+          : "";
+
+        return `
+<div class="step-item ${checked ? "is-done" : ""} ${isNext ? "is-next" : ""}" ${dragAttrs}>
+  ${dragHandle}
+  <div class="step-check ${checked ? "checked" : ""}" onclick="toggleStep(${epId},${st.id})">
+    ${checked ? `<svg viewBox="0 0 12 12" fill="none">
+      <polyline points="2,6.5 5,9.5 10,3" stroke="white" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` : ""}
+  </div>
+  <div class="step-body">
+    ${textHtml}
+    <div class="step-desc">${st.desc}</div>
+  </div>
+  ${BY_LABEL[st.by]}
+</div>`;
+      }
+
+      // ── Custom step ──
+      const cs = S.customSteps.find(c => c.id === sid);
+      if (!cs) return "";
+      const key     = `ep${epId}_cs_${cs.id}`;
+      const checked = !!S.checked[key];
+      const isNext  = next && next.isCustom && next.st.id === cs.id;
+
+      let textHtml;
+      if (S.adminMode) {
+        textHtml = `<textarea class="step-edit" rows="1"
+          onchange="editCsText('${cs.id}',this.value)">${cs.text}</textarea>`;
+      } else {
+        textHtml = `<span class="step-text">${isNext ? '<span class="next-tag">下一步</span>' : ""}${cs.text}</span>`;
+      }
+
+      const byCtrl = S.adminMode
+        ? `<select class="step-by-select" onchange="editCsBy('${cs.id}',this.value)">
+             <option value="client" ${cs.by==="client"?"selected":""}>甲方</option>
+             <option value="peiyi"  ${cs.by==="peiyi" ?"selected":""}>沛儀</option>
+             <option value="both"   ${cs.by==="both"  ?"selected":""}>共同</option>
+           </select>`
+        : (BY_LABEL[cs.by] || BY_LABEL.both);
+
+      const delBtn = S.adminMode
+        ? `<button class="step-del-btn" onclick="deleteCustomStep('${cs.id}')" title="刪除此步驟">✕</button>`
+        : "";
+
+      const dragAttrs = S.adminMode
+        ? `draggable="true"
+           ondragstart="stepDragStart(event,${ph.id},'${cs.id}')"
+           ondragend="stepDragEnd(event)"
+           ondragover="stepDragOver(event)"
+           ondragleave="stepDragLeave(event)"
+           ondrop="stepDrop(event,${ph.id},'${cs.id}')"`
+        : "";
+
+      return `
+<div class="step-item is-custom ${checked ? "is-done" : ""} ${isNext ? "is-next" : ""}" ${dragAttrs}>
+  ${dragHandle}
+  <div class="step-check ${checked ? "checked" : ""}" onclick="toggleCsStep(${epId},'${cs.id}')">
+    ${checked ? `<svg viewBox="0 0 12 12" fill="none">
+      <polyline points="2,6.5 5,9.5 10,3" stroke="white" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>` : ""}
+  </div>
+  <div class="step-body">
+    ${textHtml}
+    ${cs.desc ? `<div class="step-desc">${cs.desc}</div>` : ""}
+  </div>
+  ${byCtrl}
+  ${delBtn}
+</div>`;
+    }).join("");
+
+    const addBtn = S.adminMode
+      ? `<button class="add-step-btn" onclick="addCustomStep(${ph.id})">＋ 在 Phase ${ph.id} 新增步驟</button>`
+      : "";
+
+    return `
+<div class="phase-section">
+  <div class="phase-head">
+    <div class="phase-dot" style="background:${ph.color}"></div>
+    <span class="phase-label">Phase ${ph.id}</span>
+    <span class="phase-name">${ph.name}</span>
+  </div>
+  ${stepsHtml}${addBtn}
+</div>`;
+  }).join("");
+
+  const allDone = done === total;
+
+  detail.innerHTML = `
+<div class="detail-header">
+  <div class="detail-badge">${ep.id}</div>
+  <div class="detail-title">
+    <h2>${ep.name}</h2>
+    <div class="meta">${ep.keyword} · 帶領老師：${ep.teacher}</div>
+  </div>
+  <div class="detail-pct-wrap">
+    <div class="detail-pct">${pct}%</div>
+    <div class="detail-pct-sub">${done} / ${total} 步驟</div>
+  </div>
+</div>
+<div style="padding:0 24px;">
+  <div class="detail-bar"><div class="detail-bar-fill" style="width:${pct}%"></div></div>
+</div>
+<div class="detail-body">
+  ${S.adminMode ? '<div class="admin-notice">✏️ 管理員模式：可編輯步驟文字、新增／刪除自定義步驟</div>' : ""}
+  <div class="done-banner ${allDone ? "visible" : ""}">
+    <div class="done-banner-icon">✨</div>
+    <div class="done-banner-text">
+      <h4>這一集完成了！</h4>
+      <p>恭喜 ${ep.name} · ${ep.teacher} ，太棒了！</p>
+    </div>
+  </div>
+  ${phasesHtml}
+  <button class="close-btn" onclick="selectEp(${epId})">▲ 收起</button>
+</div>`;
+
+  detail.classList.add("visible");
+  setTimeout(() => detail.scrollIntoView({ behavior: "smooth", block: "nearest" }), 60);
+}
+
+function renderStats() {
+  const o = overallStats();
+  document.getElementById("overallFill").style.width = o.pct + "%";
+  document.getElementById("overallPct").textContent  = o.pct + "%";
+  document.getElementById("stepLabel").textContent   = "整體完成度";
+  document.getElementById("stepCount").textContent   = `${o.totalDone} / ${o.totalAll} 步驟完成`;
+  document.getElementById("sDone").textContent   = o.done;
+  document.getElementById("sActive").textContent = o.active;
+  document.getElementById("sIdle").textContent   = o.idle;
+}
+
+function renderFlowRef() {
+  const grid = document.getElementById("phasesGrid");
+  if (!grid) return;
+  grid.innerHTML = PHASES.map(ph => {
+    const customForPh = S.customSteps.filter(cs => cs.phId === ph.id);
+    const customHtml  = customForPh.map(cs =>
+      `<div class="phase-ref-step" style="color:var(--gold);">＋ ${cs.text}</div>`
+    ).join("");
+    return `
+<div class="phase-ref-card">
+  <div class="phase-ref-title" style="color:${ph.color};border-color:${ph.color}">
+    Phase ${ph.id} · ${ph.name}
+  </div>
+  ${ph.steps.map(st => `<div class="phase-ref-step">${st.text}</div>`).join("")}
+  ${customHtml}
+</div>`;
+  }).join("");
+}
+
+function renderAll() {
+  renderGrid();
+  renderStats();
+  if (S.openEp !== null) renderDetail(S.openEp);
+  if (S.activeTab === "schedule") renderSchedule();
+  if (S.activeTab === "flow") {
+    // Rebuild the flow iframe so admin-mode editing controls appear/disappear
+    const f = document.getElementById("flowFrame");
+    if (f) f.srcdoc = buildFlowHtml();
+  }
+}
+
+// ══════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════
+
+function selectEp(id) {
+  if (S.openEp === id) {
+    S.openEp = null;
+    document.getElementById("epDetail").classList.remove("visible");
+  } else {
+    S.openEp = id;
+    renderDetail(id);
+  }
+  renderGrid();
+}
+
+function toggleStep(epId, stepId) {
+  const k = `ep${epId}_s${stepId}`;
+  S.checked[k] = !S.checked[k];
+  persist();
+  renderAll();
+}
+
+function editText(phId, stId, val) {
+  // Update in memory
+  const ph = PHASES.find(p => p.id === phId);
+  if (ph) { const st = ph.steps.find(s => s.id === stId); if (st) st.text = val; }
+  // Persist
+  S.customText[`ph${phId}_s${stId}`] = val;
+  persist();
+  renderStats(); // re-render stats only (don't re-render detail to avoid losing focus)
+}
+
+// ══════════════════════════════════════════
+//  CUSTOM STEPS (admin only)
+// ══════════════════════════════════════════
+
+function addCustomStep(phId) {
+  if (!S.adminMode) return;
+  const id = "cs" + S.customStepsNext++;
+  S.customSteps.push({ id, phId, text: "（新項目—請點此編輯）", desc: "", by: "both" });
+  persist();
+  renderDetail(S.openEp);
+  renderFlowRef();
+}
+
+function deleteCustomStep(csId) {
+  if (!S.adminMode) return;
+  S.customSteps = S.customSteps.filter(cs => cs.id !== csId);
+  EPISODES.forEach(ep => delete S.checked[`ep${ep.id}_cs_${csId}`]);
+  persist();
+  renderDetail(S.openEp);
+  renderGrid();
+  renderStats();
+  renderFlowRef();
+}
+
+function toggleCsStep(epId, csId) {
+  const k = `ep${epId}_cs_${csId}`;
+  S.checked[k] = !S.checked[k];
+  persist();
+  renderAll();
+}
+
+function editCsText(csId, val) {
+  const cs = S.customSteps.find(c => c.id === csId);
+  if (cs) cs.text = val;
+  persist();
+}
+
+function editCsBy(csId, val) {
+  const cs = S.customSteps.find(c => c.id === csId);
+  if (cs) cs.by = val;
+  persist();
+  renderDetail(S.openEp);
+}
+
+// ══════════════════════════════════════════
+//  DRAG-TO-REORDER STEPS (admin mode)
+// ══════════════════════════════════════════
+
+/** Returns ordered step IDs for a phase. Built-in = number, custom = string 'csX' */
+function getPhaseStepOrder(phId) {
+  const ph = PHASES.find(p => p.id === phId);
+  const builtInIds = ph.steps.map(s => s.id);
+  const customIds  = S.customSteps.filter(c => c.phId === phId).map(c => c.id);
+  const defaultOrder = [...builtInIds, ...customIds];
+
+  if (!S.stepOrder[phId] || S.stepOrder[phId].length === 0) return defaultOrder;
+
+  // Reconcile: keep saved order, append any newly-added IDs not yet in order
+  const saved = S.stepOrder[phId].filter(id =>
+    defaultOrder.includes(id) || defaultOrder.map(String).includes(String(id))
+  );
+  const missing = defaultOrder.filter(id => !saved.includes(id) && !saved.map(String).includes(String(id)));
+  return [...saved, ...missing];
+}
+
+let _dragSid = null, _dragPhId = null;
+
+function stepDragStart(e, phId, sid) {
+  _dragSid  = sid;
+  _dragPhId = phId;
+  e.dataTransfer.effectAllowed = "move";
+  e.currentTarget.classList.add("dragging");
+}
+
+function stepDragEnd(e) {
+  e.currentTarget.classList.remove("dragging");
+  document.querySelectorAll(".step-item.drag-over").forEach(el => el.classList.remove("drag-over"));
+}
+
+function stepDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  e.currentTarget.classList.add("drag-over");
+}
+
+function stepDragLeave(e) {
+  e.currentTarget.classList.remove("drag-over");
+}
+
+function stepDrop(e, phId, sid) {
+  e.preventDefault();
+  e.currentTarget.classList.remove("drag-over");
+  if (_dragPhId !== phId || _dragSid === sid) return;
+
+  const order = getPhaseStepOrder(phId);
+  // Normalise IDs to string for comparison since JSON may coerce
+  const fromIdx = order.findIndex(id => String(id) === String(_dragSid));
+  const toIdx   = order.findIndex(id => String(id) === String(sid));
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  order.splice(toIdx, 0, order.splice(fromIdx, 1)[0]);
+  S.stepOrder[phId] = order;
+  persist();
+  renderDetail(S.openEp);
+}
+
+// ══════════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════════
+
+function switchTab(tabId) {
+  S.activeTab = tabId;
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === tabId);
+  });
+  document.getElementById("panelTracker").classList.toggle("active",  tabId === "tracker");
+  document.getElementById("panelSchedule").classList.toggle("active", tabId === "schedule");
+  document.getElementById("panelFlow").classList.toggle("active",     tabId === "flow");
+  if (tabId === "schedule") renderSchedule();
+  if (tabId === "flow") {
+    const f = document.getElementById("flowFrame");
+    if (f) f.srcdoc = buildFlowHtml(); // always rebuild so edits + admin state are current
+  }
+}
+
+function autoResizeFrame(iframe) {
+  try {
+    iframe.style.height = (iframe.contentDocument.body.scrollHeight + 24) + "px";
+  } catch(e) {}
+  if (S.adminMode) enableFlowEditing(iframe);
+}
+
+// ── Admin: in-place editing of 流程說明 ──
+function enableFlowEditing(iframe) {
+  try {
+    const doc = iframe.contentDocument;
+    if (!doc || !doc.body) return;
+    // Add an admin bar inside the iframe
+    if (!doc.getElementById("_flowAdminBar")) {
+      const bar = doc.createElement("div");
+      bar.id = "_flowAdminBar";
+      bar.style.cssText = "position:sticky;top:0;z-index:999;background:rgba(201,150,58,0.15);border-bottom:1px solid rgba(201,150,58,0.4);padding:8px 16px;font-size:11px;color:#8a6a20;letter-spacing:0.5px;text-align:center;font-family:inherit;";
+      bar.textContent = "✏️ 管理員模式 · 點擊任意標題或段落即可直接編輯，離開欄位後自動儲存";
+      doc.body.insertBefore(bar, doc.body.firstChild);
+    }
+    doc.querySelectorAll("[data-fk]").forEach(el => {
+      if (el.contentEditable === "true") return; // already wired
+      el.contentEditable = "true";
+      el.style.outline = "1.5px dashed rgba(201,150,58,0.55)";
+      el.style.borderRadius = "4px";
+      el.style.cursor = "text";
+      el.style.padding = "2px 4px";
+      el.style.margin = "-2px -4px";
+      el.style.transition = "outline 0.15s";
+      el.addEventListener("focus", () => {
+        el.style.outline = "2px solid rgba(201,150,58,0.9)";
+        el.style.background = "rgba(255,251,240,0.9)";
+      });
+      el.addEventListener("blur", () => {
+        el.style.outline = "1.5px dashed rgba(201,150,58,0.55)";
+        el.style.background = "";
+        S.flowText[el.dataset.fk] = el.innerHTML;
+        persist();
+      });
+    });
+  } catch(e) { console.warn("enableFlowEditing:", e); }
+}
+
+// ══════════════════════════════════════════
+//  ADMIN
+// ══════════════════════════════════════════
+
+function openAdmin() {
+  if (S.adminMode) {
+    S.adminMode = false;
+    const btn = document.getElementById("adminBtn");
+    btn.textContent = "🔒 管理員";
+    btn.classList.remove("active");
+    renderAll();
+    return;
+  }
+  document.getElementById("adminModal").classList.add("visible");
+  const inp = document.getElementById("pwdInput");
+  inp.value = "";
+  inp.placeholder = "●●●●";
+  inp.classList.remove("err");
+  setTimeout(() => inp.focus(), 100);
+}
+
+function closeAdmin() {
+  document.getElementById("adminModal").classList.remove("visible");
+}
+
+function doLogin() {
+  const inp = document.getElementById("pwdInput");
+  if (inp.value === ADMIN_PWD) {
+    S.adminMode = true;
+    const btn = document.getElementById("adminBtn");
+    btn.textContent = "🔓 管理員模式中";
+    btn.classList.add("active");
+    closeAdmin();
+    renderAll();
+  } else {
+    inp.classList.add("err");
+    setTimeout(() => { inp.classList.remove("err"); inp.value = ""; inp.placeholder = "密碼錯誤，再試一次"; }, 500);
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById("adminModal").addEventListener("click", e => {
+  if (e.target.id === "adminModal") closeAdmin();
+});
+
+// ══════════════════════════════════════════
+//  FLOW DOC (embedded HTML)
+// ══════════════════════════════════════════
+
+function buildFlowHtml() {
+  const t = S.flowText || {};
+  const _t = (key, def) => t[key] || def;
+  return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>製作流程</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Helvetica Neue', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: #faf9f6; color: #2d2d2d; padding: 48px 32px; min-height: 100vh; }
+  .page { max-width: 860px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 48px; }
+  .header .en-title { font-size: 13px; letter-spacing: 4px; color: #b8a98a; text-transform: uppercase; margin-bottom: 10px; }
+  .header h1 { font-size: 28px; font-weight: 700; color: #2d2d2d; letter-spacing: 1px; margin-bottom: 8px; }
+  .header .subtitle { font-size: 14px; color: #888; letter-spacing: 1px; }
+  .header .divider { width: 60px; height: 2px; background: linear-gradient(90deg, #e8c97a, #f0b5a0); margin: 20px auto 0; border-radius: 2px; }
+  .legend { display: flex; gap: 24px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #666; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .flow { display: flex; flex-direction: column; gap: 0; position: relative; }
+  .connector { display: flex; justify-content: center; align-items: center; height: 32px; position: relative; }
+  .connector::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #e0dbd0; transform: translateX(-50%); }
+  .connector-arrow { width: 8px; height: 8px; border-right: 2px solid #c5bfb0; border-bottom: 2px solid #c5bfb0; transform: rotate(45deg); background: #faf9f6; position: relative; z-index: 1; margin-top: 8px; }
+  .step { display: flex; gap: 20px; align-items: flex-start; }
+  .step-left { display: flex; flex-direction: column; align-items: center; min-width: 48px; padding-top: 16px; }
+  .step-number { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+  .step-card { flex: 1; border-radius: 14px; padding: 20px 24px; position: relative; border: 1.5px solid transparent; }
+  .step-card .step-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; }
+  .step-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; }
+  .step-card p { font-size: 13px; color: #666; line-height: 1.7; margin-bottom: 0; }
+  .step-card .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .meeting-badge { position: absolute; top: 16px; right: 20px; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .type-normal .step-number { background: #9b9b8a; }
+  .type-normal .step-card { background: #ffffff; border-color: #e8e4da; }
+  .type-normal .step-label { color: #9b9b8a; }
+  .type-normal .step-card h3 { color: #2d2d2d; }
+  .type-meeting .step-number { background: #c07a5a; }
+  .type-meeting .step-card { background: #fff8f4; border-color: #f0c8b0; }
+  .type-meeting .step-label { color: #c07a5a; }
+  .type-meeting .step-card h3 { color: #8b4a2a; }
+  .type-meeting .meeting-badge { background: #f0c8b0; color: #8b4a2a; }
+  .type-milestone .step-number { background: #8a9b6a; }
+  .type-milestone .step-card { background: #f6f9f0; border-color: #c8d8a8; }
+  .type-milestone .step-label { color: #6a8a4a; }
+  .type-milestone .step-card h3 { color: #3a5a2a; }
+  .type-delivery .step-number { background: linear-gradient(135deg, #e8c97a, #c07a5a); }
+  .type-delivery .step-card { background: linear-gradient(135deg, #fffbf0, #fff8f4); border-color: #e8c97a; }
+  .type-delivery .step-label { color: #b8903a; }
+  .type-delivery .step-card h3 { color: #7a5a1a; }
+  .tag-you { background: #e8f0ff; color: #4a6aaa; }
+  .tag-teacher { background: #fff0e8; color: #aa6a4a; }
+  .tag-client { background: #f0ffe8; color: #5a8a4a; }
+  .tag-both { background: #f8f0ff; color: #7a5aaa; }
+  .mod-note { background: #fffbf0; border: 1px solid #e8d88a; border-radius: 8px; padding: 10px 16px; font-size: 12px; color: #8a7a3a; margin-top: 12px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.6; }
+  .mod-note .icon { flex-shrink: 0; }
+  .phase-header { display: flex; align-items: center; gap: 12px; margin: 36px 0 16px; }
+  .phase-header .phase-line { flex: 1; height: 1px; background: #e0dbd0; }
+  .phase-header .phase-label { font-size: 11px; letter-spacing: 3px; color: #aaa; white-space: nowrap; }
+  .summary { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .summary-card { background: white; border: 1.5px solid #e8e4da; border-radius: 12px; padding: 20px; text-align: center; }
+  .summary-card .num { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .summary-card .label { font-size: 12px; color: #888; line-height: 1.5; }
+  .summary-card.meetings .num { color: #c07a5a; }
+  .summary-card.revisions .num { color: #8a9b6a; }
+  .summary-card.weeks .num { color: #b8903a; }
+  .party-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 40px; }
+  .party-card { border-radius: 12px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 14px; }
+  .party-card.party-a { background: #f0fae8; border: 1.5px solid #c8d8a8; }
+  .party-card.party-b { background: #eef2ff; border: 1.5px solid #c0ccf0; }
+  .party-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+  .party-info .party-role { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+  .party-card.party-a .party-role { color: #6a8a4a; }
+  .party-card.party-b .party-role { color: #4a6aaa; }
+  .party-info .party-name { font-size: 15px; font-weight: 700; color: #2d2d2d; margin-bottom: 3px; }
+  .party-info .party-desc { font-size: 12px; color: #888; line-height: 1.5; }
+  .type-action .step-number { background: #5a8aaa; }
+  .type-action .step-card { background: #f0f8ff; border-color: #a8c8e8; }
+  .type-action .step-label { color: #5a8aaa; }
+  .type-action .step-card h3 { color: #2a5a7a; }
+  .tag-action { background: #e0f0ff; color: #3a6a9a; }
+  .footer { text-align: center; margin-top: 48px; font-size: 12px; color: #bbb; letter-spacing: 1px; }
+  @media (max-width: 600px) { body { padding: 24px 16px; } .summary { grid-template-columns: 1fr; } .header h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="en-title">Light Flight · Production Workflow</div>
+    <h1>《光的飛行航程》單集製作流程</h1>
+    <div class="subtitle">每集完整製作 · 4–8 週 · 共 4 次線上會議</div>
+    <div class="divider"></div>
+  </div>
+  <div class="party-box">
+    <div class="party-card party-a">
+      <div class="party-icon">🌿</div>
+      <div class="party-info">
+        <div class="party-role">甲方 · Client</div>
+        <div class="party-name">兒童光團隊</div>
+        <div class="party-desc">委託方，包含計劃核心人員<br>與各光色單元帶領老師</div>
+      </div>
+    </div>
+    <div class="party-card party-b">
+      <div class="party-icon">✨</div>
+      <div class="party-info">
+        <div class="party-role">乙方 · Creator</div>
+        <div class="party-name">沛儀（林沛儀）</div>
+        <div class="party-desc">光種子 Light Seed IP 創作者<br>負責整體製作統籌與創作執行</div>
+      </div>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#9b9b8a;"></div><span>製作步驟</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c07a5a;"></div><span>線上會議</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8a9b6a;"></div><span>確認里程碑</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e8c97a;"></div><span>交付</span></div>
+  </div>
+  <div class="phase-header"><div class="phase-line"></div><div class="phase-label">PHASE 1 · 素材收取與方向確認</div><div class="phase-line"></div></div>
+  <div class="flow">
+    <div class="step type-normal">
+      <div class="step-left"><div class="step-number">1</div></div>
+      <div class="step-card">
+        <div class="step-label">素材收取</div>
+        <h3 data-fk="s1h">${_t('s1h','甲方老師發送文本與第一版錄音')}</h3>
+        <p data-fk="s1p">${_t('s1p','以《光的兒童飛行航程》原始靜坐文本為基礎，重新書寫以孩子為靜心帶領對象的單元文本，並附上本集第一版語音錄製。')}</p>
+        <div class="tag-row"><span class="tag tag-client">甲方老師執行</span><span class="tag tag-you">沛儀接收素材</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-meeting">
+      <div class="step-left"><div class="step-number">2</div></div>
+      <div class="step-card">
+        <div class="meeting-badge">第 1 次會議</div>
+        <div class="step-label">一對一對談</div>
+        <h3 data-fk="s2h">${_t('s2h','乙方 × 本集老師｜確認光的核心語境')}</h3>
+        <p data-fk="s2p">${_t('s2p','沛儀聽完文本與錄音後，與本集老師進行一對一會議。確認本單元的核心重點、光的語意與語境、情緒基調，確保後續創作方向正確。')}</p>
+        <div class="tag-row"><span class="tag tag-both">沛儀 + 本集老師</span><span class="tag tag-you">線上或線下</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+  </div>
+  <div class="phase-header"><div class="phase-line"></div><div class="phase-label">PHASE 2 · Demo 製作與方向確認</div><div class="phase-line"></div></div>
+  <div class="flow">
+    <div class="step type-normal">
+      <div class="step-left"><div class="step-number">3</div></div>
+      <div class="step-card">
+        <div class="step-label">Demo 製作</div>
+        <h3 data-fk="s3h">${_t('s3h','文本微調＋分鏡設計＋Demo 影片')}</h3>
+        <p data-fk="s3p">${_t('s3p','沛儀依據會議結論進行文本微調（強化故事情節與節奏）；繪製分鏡草圖；製作 Demo 影片（以沛儀佔位配音或結合老師第一版錄音剪輯而成），讓甲方直觀感受影片節奏與方向。')}</p>
+        <div class="tag-row"><span class="tag tag-you">沛儀執行</span></div>
+        <div class="mod-note"><span class="icon">✏️</span><span><strong>文本與分鏡修改上限：2 次</strong>（在此階段至第 2 次會議之間計算）</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-meeting">
+      <div class="step-left"><div class="step-number">4</div></div>
+      <div class="step-card">
+        <div class="meeting-badge">第 2 次會議</div>
+        <div class="step-label">核心審查</div>
+        <h3 data-fk="s4h">${_t('s4h','核心甲方團隊｜審查 Demo 影片')}</h3>
+        <p data-fk="s4p">${_t('s4p','由甲方自行擬定出席的核心人員（建議設有最終決策者）。共同觀看 Demo 影片，確認故事方向、節奏與視覺概念，提出調整意見。')}</p>
+        <div class="tag-row"><span class="tag tag-client">甲方核心人員</span><span class="tag tag-you">沛儀</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-milestone">
+      <div class="step-left"><div class="step-number" style="font-size:16px;">✓</div></div>
+      <div class="step-card">
+        <div class="step-label">里程碑</div>
+        <h3 data-fk="s5h">${_t('s5h','文本與分鏡確認定稿 → 進入正式製作')}</h3>
+        <p data-fk="s5p">${_t('s5p','文本與分鏡在此確認，不再更動。若有調整需求，須在修改上限 2 次內完成後方可進入下一階段。確認後，甲方同步啟動英文翻譯。')}</p>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+  </div>
+  <div class="phase-header"><div class="phase-line"></div><div class="phase-label">PHASE 3 · 正式繪製與配音協作</div><div class="phase-line"></div></div>
+  <div class="flow">
+    <div class="step type-action">
+      <div class="step-left"><div class="step-number">5</div></div>
+      <div class="step-card">
+        <div class="step-label">甲方任務</div>
+        <h3 data-fk="s6h">${_t('s6h','甲方提供英文翻譯稿')}</h3>
+        <p data-fk="s6p">${_t('s6p','腳本確認定稿後，甲方負責將中文腳本翻譯為英文，並於進入影音整合前提供給沛儀，以利後續製作中英文對照字幕。')}</p>
+        <div class="tag-row"><span class="tag tag-client">甲方執行</span><span class="tag tag-action">須於影音整合前完成</span></div>
+        <div class="mod-note"><span class="icon">📋</span><span>英文翻譯稿為字幕製作之必要素材，請於步驟 7 影音整合前提供給沛儀。</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-normal">
+      <div class="step-left"><div class="step-number">6</div></div>
+      <div class="step-card">
+        <div class="step-label">三線並行</div>
+        <h3 data-fk="s7h">${_t('s7h','插畫正式繪製 ＋ 老師正式配音錄製')}</h3>
+        <p data-fk="s7p">${_t('s7p','沛儀依定稿分鏡進行完整插畫繪製。甲方本集老師同步進行正式配音錄製，沛儀提供錄音節奏與語氣指導。')}</p>
+        <div class="tag-row"><span class="tag tag-you">沛儀：插畫繪製</span><span class="tag tag-teacher">本集老師：配音錄製</span><span class="tag tag-client">甲方：英文翻譯稿（同期完成）</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-meeting">
+      <div class="step-left"><div class="step-number">7</div></div>
+      <div class="step-card">
+        <div class="meeting-badge">第 3 次會議</div>
+        <div class="step-label">進度確認</div>
+        <h3 data-fk="s8h">${_t('s8h','插畫完成後｜靜態畫面審查')}</h3>
+        <p data-fk="s8p">${_t('s8p','插畫全數完成後，召開進度確認會議。甲方核心人員確認視覺風格、角色與場景是否符合預期，避免進入影音整合後才發現問題。')}</p>
+        <div class="tag-row"><span class="tag tag-client">甲方核心人員</span><span class="tag tag-you">沛儀</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+  </div>
+  <div class="phase-header"><div class="phase-line"></div><div class="phase-label">PHASE 4 · 影音整合與最終交付</div><div class="phase-line"></div></div>
+  <div class="flow">
+    <div class="step type-normal">
+      <div class="step-left"><div class="step-number">8</div></div>
+      <div class="step-card">
+        <div class="step-label">影音整合</div>
+        <h3 data-fk="s9h">${_t('s9h','配音＋字幕＋背景音樂＋影片剪輯')}</h3>
+        <p data-fk="s9p">${_t('s9p','整合所有素材：正式配音、中英文字幕對照、背景音樂、畫面動態與轉場效果。同步製作衍生 IG 短影音版本（30–60 秒）。')}</p>
+        <div class="tag-row"><span class="tag tag-you">沛儀執行</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-meeting">
+      <div class="step-left"><div class="step-number">9</div></div>
+      <div class="step-card">
+        <div class="meeting-badge">第 4 次會議</div>
+        <div class="step-label">最終確認</div>
+        <h3 data-fk="s10h">${_t('s10h','核心甲方團隊｜完整版＋IG 短影音雙確認')}</h3>
+        <p data-fk="s10p">${_t('s10p','同場確認兩項成果：① YouTube 完整版影片、② IG 短影音版本（30–60 秒）。提出最終修改意見。')}</p>
+        <div class="tag-row"><span class="tag tag-client">甲方核心人員</span><span class="tag tag-you">沛儀</span></div>
+        <div class="mod-note"><span class="icon">🔁</span><span><strong>整體影片修正：1 次</strong>（主片＋IG 短影音統一修正，完成後即進入正式交付）</span></div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-arrow"></div></div>
+    <div class="step type-delivery">
+      <div class="step-left"><div class="step-number">✦</div></div>
+      <div class="step-card">
+        <div class="step-label">正式交付</div>
+        <h3 data-fk="s11h">${_t('s11h','🌟 交付完整版影片 ＋ IG 短影音')}</h3>
+        <p data-fk="s11p">${_t('s11p','修正完成後，正式交付以下兩項成果：<br>① YouTube 完整版影音繪本（中英文字幕）<br>② IG 衍生短影音（30–60 秒）')}</p>
+        <div class="tag-row"><span class="tag tag-client">甲方接收成果</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="summary">
+    <div class="summary-card meetings"><div class="num">4</div><div class="label">次線上會議<br>每集固定</div></div>
+    <div class="summary-card revisions"><div class="num">2+1</div><div class="label">修改次數<br>文本分鏡 2 次 · 影片 1 次</div></div>
+    <div class="summary-card weeks"><div class="num">4–8</div><div class="label">週製作期程<br>每集完整製作</div></div>
+  </div>
+  <div class="footer">《光的飛行航程 Light Flight》· 製作方：沛儀 林沛儀（光種子 Light Seed IP 創作者）· 2026</div>
+</div>
+</body>
+</html>`;
+} // end buildFlowHtml
+
+// ══════════════════════════════════════════
+//  SCHEDULE
+// ══════════════════════════════════════════
+
+const MEETING_NAMES = [
+  "一對一方向確認",
+  "Demo 核心審查",
+  "插畫靜態審查",
+  "最終版確認",
+];
+
+/** Generate 4 bi-weekly meeting dates from a start date string "YYYY-MM-DD" */
+function genEpMeetings(startDate) {
+  const dates = [];
+  for (let i = 0; i < 4; i++) {
+    const d = new Date(startDate + "T00:00:00");
+    d.setDate(d.getDate() + i * 14);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+function todayStr() {
+  const n = new Date();
+  const y = n.getFullYear();
+  const m = String(n.getMonth()+1).padStart(2,"0");
+  const d = String(n.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+
+function formatDate(d) {
+  const dt = new Date(d + "T00:00:00");
+  const weekday = ["日","一","二","三","四","五","六"][dt.getDay()];
+  const mm = String(dt.getMonth()+1).padStart(2,"0");
+  const dd = String(dt.getDate()).padStart(2,"0");
+  return `${dt.getFullYear()}/${mm}/${dd}（${weekday}）`;
+}
+
+function meetingStatus(dateStr) {
+  if (!dateStr) return "pending";
+  const today = todayStr();
+  if (dateStr < today) return "done";
+  if (dateStr === today) return "today";
+  const msPerDay = 86400000;
+  const daysAway = (new Date(dateStr + "T00:00:00") - new Date(today + "T00:00:00")) / msPerDay;
+  if (daysAway <= 7) return "soon";
+  return "confirm";
+}
+
+const STATUS_LABEL = { today:"今日開會", soon:"即將到來", done:"已完成", confirm:"已確定", pending:"待排程" };
+const STATUS_BADGE = { today:"badge-today", soon:"badge-soon", done:"badge-done", confirm:"badge-confirm", pending:"badge-pending" };
+
+function renderSchedule() {
+  const list = document.getElementById("scheduleList");
+  if (!list) return;
+
+  const scheduledEps = [];
+  const pendingEps   = [];
+
+  EPISODES.forEach(ep => {
+    if (ep.id === 0) return; // 光種子 (沛儀自己) — 略過
+    const dates = S.schedule[ep.id];
+    if (dates && dates.some(d => d)) scheduledEps.push({ ep, dates });
+    else pendingEps.push(ep);
+  });
+
+  let html = "";
+
+  // ── Scheduled episodes ──
+  scheduledEps.forEach(({ ep, dates }) => {
+    const epSt = epStatus(ep.id);
+    const badgeStyle = epSt === "done"   ? "background:var(--gold);color:#fff"
+                     : epSt === "active" ? "background:var(--sage);color:#fff" : "";
+
+    const meetingsHtml = MEETING_NAMES.map((mName, i) => {
+      const d      = dates[i] || null;
+      const status = meetingStatus(d);
+      const displayName = S.meetingNames[i] || mName;
+
+      const dateHtml = d
+        ? `<div class="meeting-date">${formatDate(d)}</div>
+           <div class="meeting-time">上午 10:00</div>`
+        : `<div class="meeting-date" style="color:var(--text-mute);font-style:italic;">待確認</div>`;
+
+      const nameHtml = S.adminMode
+        ? `<input class="meeting-name-input" value="${displayName}"
+             placeholder="會議名稱" onchange="editMeetingName(${i},this.value)">`
+        : `<div class="meeting-name">${displayName}</div>`;
+
+      const editHtml = S.adminMode
+        ? `<input type="date" class="meeting-date-input" value="${d || ""}"
+             title="點擊修改日期" onchange="setMeetingDate(${ep.id},${i},this.value)">`
+        : "";
+
+      return `
+<div class="meeting-card status-${status}">
+  <div class="meeting-num">Meeting ${i+1}</div>
+  ${nameHtml}
+  ${dateHtml}
+  <div class="meeting-status-badge ${STATUS_BADGE[status]}">${STATUS_LABEL[status]}</div>
+  ${editHtml}
+</div>`;
+    }).join("");
+
+    html += `
+<div class="schedule-ep-row">
+  <div class="schedule-ep-head">
+    <div class="ep-badge" style="${badgeStyle}">${ep.id}</div>
+    <div class="schedule-ep-head-info">
+      <div class="schedule-ep-head-name">${ep.name}</div>
+      <div class="schedule-ep-head-sub">${ep.keyword} · 帶領老師：${ep.teacher}</div>
+    </div>
+  </div>
+  <div class="schedule-meetings">${meetingsHtml}</div>
+</div>`;
+  });
+
+  // ── Pending episodes ──
+  if (pendingEps.length > 0) {
+    const chips = pendingEps.map(ep => {
+      const adminInput = S.adminMode
+        ? `<input type="date" class="pending-date-input" title="設定首次開會日（自動填入後三次）"
+             onchange="initEpSchedule(${ep.id},this.value)">`
+        : "";
+      return `
+<div class="pending-ep-chip">
+  <strong>${ep.name}</strong>
+  <span style="color:var(--text-mute)">·</span>
+  ${ep.teacher}
+  ${adminInput}
+</div>`;
+    }).join("");
+
+    html += `
+<div class="schedule-pending-section">
+  <div class="schedule-pending-title">待排程 · ${pendingEps.length} 位老師</div>
+  <div class="pending-ep-chips">${chips}</div>
+</div>`;
+  }
+
+  list.innerHTML = html;
+}
+
+function setMeetingDate(epId, meetIdx, dateStr) {
+  if (!S.schedule[epId]) S.schedule[epId] = [null, null, null, null];
+  S.schedule[epId][meetIdx] = dateStr || null;
+  persist();
+  renderSchedule();
+}
+
+function editMeetingName(meetIdx, val) {
+  if (val && val.trim()) {
+    S.meetingNames[meetIdx] = val.trim();
+  } else {
+    delete S.meetingNames[meetIdx]; // revert to default
+  }
+  persist();
+  // also refresh the flow frame so meeting labels there stay in sync
+  if (S.activeTab === "flow") {
+    const f = document.getElementById("flowFrame");
+    if (f) { f.srcdoc = buildFlowHtml(); }
+  }
+}
+
+function initEpSchedule(epId, startDate) {
+  if (!startDate) return;
+  S.schedule[epId] = genEpMeetings(startDate);
+  persist();
+  renderSchedule();
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+
+initState();
+renderAll();      // renders grid + stats
+renderSchedule(); // schedule is the default tab
+</script>
+</body>
+</html>
