@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《光的飛行航程》老師錄音指南</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #faf9f6;
+  --card: #ffffff;
+  --dark: #2a2418;
+  --gold: #c9963a;
+  --gold-soft: #f0e0b0;
+  --terra: #c07a5a;
+  --sage: #6a8a4a;
+  --red: #c05a5a;
+  --text: #2d2820;
+  --text-mid: #6a6055;
+  --text-mute: #a09888;
+  --border: #e8e0d5;
+  --cream: #f5f0e6;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Helvetica Neue', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  padding: 0 0 60px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  background: var(--dark);
+  padding: 36px 28px 28px;
+  text-align: center;
+}
+.header .en { font-size: 11px; letter-spacing: 4px; color: #f0e0b0; text-transform: uppercase; margin-bottom: 10px; }
+.header h1 { font-size: 22px; color: #fff; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+.header .sub { font-size: 13px; color: rgba(255,255,255,0.5); }
+.header-star { font-size: 36px; margin-bottom: 12px; display: block; }
+
+/* Section */
+.section { padding: 24px 20px 0; }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  border: 1.5px solid var(--border);
+}
+.card.gold  { border-color: #e8c97a; background: #fffdf5; }
+.card.red   { border-color: #f0b0b0; background: #fff8f8; }
+.card.sage  { border-color: #b8d898; background: #f5fbf0; }
+.card.dark  { background: var(--dark); border-color: var(--dark); }
+
+/* Row items */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.item:last-child { border-bottom: none; padding-bottom: 0; }
+.item:first-child { padding-top: 0; }
+.item-icon { font-size: 22px; flex-shrink: 0; width: 34px; text-align: center; margin-top: 1px; }
+.item-body { flex: 1; }
+.item-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.item-desc { font-size: 12px; color: var(--text-mid); line-height: 1.65; }
+
+/* Do/Don't row */
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.check-row:last-child { border-bottom: none; }
+.check-badge {
+  font-size: 15px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.check-badge.yes { background: #e8f5e0; }
+.check-badge.no  { background: #fde8e8; }
+.check-text { font-size: 13px; color: var(--text); line-height: 1.6; padding-top: 3px; }
+.check-text strong { color: var(--dark); }
+
+/* Mic section */
+.mic-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0; }
+.mic-tab {
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  border: 2px solid var(--border);
+}
+.mic-tab.active { border-color: var(--gold); background: #fffdf0; }
+.mic-tab .icon { font-size: 32px; margin-bottom: 8px; }
+.mic-tab .label { font-size: 12px; font-weight: 700; color: var(--text-mid); letter-spacing: 1px; }
+.mic-tab .name { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 4px; }
+.mic-tab .rec { font-size: 10px; background: var(--gold); color: #fff; border-radius: 10px; padding: 2px 8px; display: inline-block; margin-top: 6px; letter-spacing: 0.5px; }
+
+/* Step list */
+.steps { counter-reset: step; }
+.step-row {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.step-row:last-child { border-bottom: none; }
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: #f0e0b0;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-body .step-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.step-body .step-detail { font-size: 12px; color: var(--text-mid); line-height: 1.65; }
+.step-body .step-tip {
+  font-size: 11px;
+  background: var(--cream);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text-mid);
+  margin-top: 6px;
+  border-left: 3px solid var(--gold);
+}
+
+/* Warning box */
+.warn-box {
+  background: #fff8f0;
+  border: 1.5px solid #f0c898;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.warn-box .warn-icon { font-size: 20px; flex-shrink: 0; }
+.warn-box .warn-text { font-size: 12px; color: #8a6020; line-height: 1.7; }
+.warn-box .warn-text strong { color: #6a4010; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-mute);
+  padding: 28px 20px 0;
+  letter-spacing: 1px;
+}
+
+/* Tag */
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.tag-must { background: #fde8e8; color: #c05a5a; }
+.tag-good { background: #e8f5e0; color: #4a8a2a; }
+
+@media (max-width: 480px) {
+  .header { padding: 28px 20px 22px; }
+  .header h1 { font-size: 19px; }
+  .section { padding: 20px 16px 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <span class="header-star">✨</span>
+  <div class="en">Light Flight · Recording Guide</div>
+  <h1>《光的飛行航程》<br>老師錄音指南</h1>
+  <div class="sub">請在錄製前完整閱讀，謝謝您的配合 🙏</div>
+</div>
+
+<!-- 1. 選擇麥克風 -->
+<div class="section">
+  <div class="section-title">01 &nbsp;選擇麥克風</div>
+  <div class="mic-tabs">
+    <div class="mic-tab active">
+      <div class="icon">🎧</div>
+      <div class="label">方式一</div>
+      <div class="name">Apple 有線耳機</div>
+      <div class="rec">✦ 推薦</div>
+    </div>
+    <div class="mic-tab">
+      <div class="icon">📱</div>
+      <div class="label">方式二</div>
+      <div class="name">手機內建錄音</div>
+      <div style="font-size:11px;color:#a09888;margin-top:6px;">若無耳機時使用</div>
+    </div>
+  </div>
+
+  <div class="card gold" style="margin-top:10px;">
+    <div class="item">
+      <div class="item-icon">🎧</div>
+      <div class="item-body">
+        <div class="item-title">Apple 有線耳機（推薦）</div>
+        <div class="item-desc">將耳機線上的<strong>麥克風模組（有按鈕的那段）</strong>靠近嘴角，距離約 10–15 公分，稍微偏向嘴角側面，不要對正嘴巴正前方，可有效避免噴麥聲（p、b 音）。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-icon">📱</div>
+      <div class="item-body">
+        <div class="item-title">手機內建錄音 App</div>
+        <div class="item-desc">iPhone 使用「<strong>語音備忘錄</strong>」，Android 使用「<strong>錄音機</strong>」。手機平放或直立放在桌上，距離嘴巴約 20–30 公分。同樣需注意環境安靜。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 環境準備 -->
+<div class="section">
+  <div class="section-title">02 &nbsp;環境準備</div>
+  <div class="card">
+    <div class="check-row">
+      <div class="check-badge yes">✓</div>
+      <div class="check-text"><strong>關閉電風扇、冷氣、除濕機</strong><br>任何會持續發出聲音的電器都要關閉</div>
+    </div>
+    <div class="check-row">
+      <div class="check-badge yes">✓</div>
+      <div class="check-text"><strong>關閉窗戶</strong><br>避免風聲、車聲、鳥鳴等環境音混入</div>
+    </div>
+    <div class="check-row">
+      <div class="check-badge yes">✓</div>
+      <div class="check-text"><strong>選有軟裝的房間</strong><br>有布沙發、窗簾、棉被的空間回音較小，效果最好。避免浴室或空曠大房間</div>
+    </div>
+    <div class="check-row">
+      <div class="check-badge yes">✓</div>
+      <div class="check-text"><strong>手機調成飛航模式</strong><br>防止來電或通知聲突然打斷錄音</div>
+    </div>
+    <div class="check-row">
+      <div class="check-badge no">✕</div>
+      <div class="check-text"><strong>不要播放背景音樂</strong><br>錄製過程全程靜音，背景音樂由後製統一加入</div>
+    </div>
+    <div class="check-row">
+      <div class="check-badge no">✕</div>
+      <div class="check-text"><strong>避免衣物、飾品摩擦聲</strong><br>錄音時盡量不要移動身體，項鍊、手環等裝飾品容易產生雜音</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 錄音前準備 -->
+<div class="section">
+  <div class="section-title">03 &nbsp;開始錄音前</div>
+  <div class="card sage">
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">喝溫水，暖嗓</div>
+        <div class="step-detail">避免喝冰水或碳酸飲料。可輕聲哼唱或說幾句話讓喉嚨放鬆。</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">先試錄 10 秒，聽一下</div>
+        <div class="step-detail">確認音量清晰、沒有雜音、沒有回音，再開始正式錄製。</div>
+        <div class="step-tip">💡 建議戴上耳機監聽，更容易判斷音質</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">深呼吸，保持穩定語速</div>
+        <div class="step-detail">說話速度比平常稍慢，語氣溫柔穩定，像在帶領靜心一樣。</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">錄製中途若有失誤</div>
+        <div class="step-detail">不需要重來，只需停頓 2–3 秒，再從那句話的開頭重新說一次。後製時可以剪接。</div>
+        <div class="step-tip">💡 停頓時保持安靜，讓剪接點更好處理</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 傳送方式 -->
+<div class="section">
+  <div class="section-title">04 &nbsp;完成後傳送</div>
+  <div class="warn-box">
+    <div class="warn-icon">⚠️</div>
+    <div class="warn-text"><strong>請直接傳送原始音檔</strong>，不要壓縮成 ZIP，也不要透過 LINE 的語音訊息傳送（會降低音質）。<br><br>建議使用 <strong>Dropbox 共用資料夾</strong>上傳，或直接以 <strong>LINE 傳送檔案</strong>（不是語音訊息）的方式傳送給沛儀。</div>
+  </div>
+  <div class="card">
+    <div class="item">
+      <div class="item-icon">📄</div>
+      <div class="item-body">
+        <div class="item-title">檔案格式</div>
+        <div class="item-desc">iPhone 錄製的 <strong>.m4a</strong> 或 Android 的 <strong>.mp3 / .wav</strong> 皆可，無需轉檔，直接傳送即可。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-icon">🏷️</div>
+      <div class="item-body">
+        <div class="item-title">命名方式</div>
+        <div class="item-desc">建議以 <strong>「光色名稱＋老師姓名＋版本」</strong> 命名，例如：<code style="background:#f5f0e6;padding:2px 6px;border-radius:4px;font-size:11px;">白光_王老師_v1.m4a</code></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. 快速提醒 -->
+<div class="section">
+  <div class="section-title">05 &nbsp;快速對照提醒</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div class="card sage" style="padding:16px;">
+      <div style="font-size:13px;font-weight:700;color:#3a6a1a;margin-bottom:10px;">✅ 要做的</div>
+      <div style="font-size:12px;color:#4a6a30;line-height:2;">
+        ✓ 關閉電器<br>
+        ✓ 關閉窗戶<br>
+        ✓ 手機飛航模式<br>
+        ✓ 先試錄確認<br>
+        ✓ 溫水暖嗓<br>
+        ✓ 語速放慢
+      </div>
+    </div>
+    <div class="card red" style="padding:16px;">
+      <div style="font-size:13px;font-weight:700;color:#8a2a2a;margin-bottom:10px;">❌ 不要做</div>
+      <div style="font-size:12px;color:#8a4a4a;line-height:2;">
+        ✕ 播放背景音樂<br>
+        ✕ 用 LINE 語音訊息<br>
+        ✕ 在浴室錄音<br>
+        ✕ 戴會響的飾品<br>
+        ✕ 喝冰水後馬上錄<br>
+        ✕ 壓縮成 ZIP 傳送
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  《光的飛行航程 Light Flight》· 製作方：沛儀 林沛儀（光種子 Light Seed IP）· 2026<br>
+  如有任何疑問，請聯絡沛儀 🌟
+</div>
+
+</body>
+</html>
