@@ -4,11 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>光的飛行航程 · 製作進度追蹤</title>
+
+<!-- App Icons -->
 <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="光的飛行航程">
+<meta name="application-name" content="光的飛行航程">
 <meta name="theme-color" content="#1a1510">
+
+<!-- Open Graph (分享到 LINE / 社群時的預覽) -->
+<meta property="og:title" content="光的飛行航程 · 製作進度追蹤">
+<meta property="og:description" content="光種子 Light Seed IP × 兒童光團隊 · 12集兒童靜心影音繪本製作看板">
+<meta property="og:image" content="icon.png">
+<meta property="og:type" content="website">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -614,7 +624,7 @@ body {
   }
   .tab-nav-inner {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     max-width: 100% !important;
     margin: 0;
   }
@@ -840,6 +850,10 @@ body {
       <svg class="tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/><circle cx="3" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="3" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="3" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg>
       <span class="tab-dot"></span>流程說明
     </button>
+    <button class="tab-btn" data-tab="guide" onclick="switchTab('guide')">
+      <svg class="tab-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><line x1="10" y1="6" x2="10" y2="10"/><circle cx="10" cy="13.5" r="0.8" fill="currentColor" stroke="none"/></svg>
+      <span class="tab-dot"></span>錄音指南
+    </button>
   </div>
 </div>
 
@@ -864,6 +878,12 @@ body {
   <div id="panelFlow" class="tab-panel">
     <iframe id="flowFrame" style="width:100%;border:none;display:block;border-radius:10px;min-height:600px;"
       onload="autoResizeFrame(this)"></iframe>
+  </div>
+
+  <!-- ── Panel: 錄音指南 ── -->
+  <div id="panelGuide" class="tab-panel">
+    <iframe id="guideFrame" src="錄音指南.html" style="width:100%;border:none;display:block;border-radius:10px;min-height:600px;"
+      onload="try{this.style.height=(this.contentDocument.body.scrollHeight+24)+'px'}catch(e){}"></iframe>
   </div>
 
 </main>
@@ -1445,6 +1465,7 @@ function switchTab(tabId) {
   document.getElementById("panelTracker").classList.toggle("active",  tabId === "tracker");
   document.getElementById("panelSchedule").classList.toggle("active", tabId === "schedule");
   document.getElementById("panelFlow").classList.toggle("active",     tabId === "flow");
+  document.getElementById("panelGuide").classList.toggle("active",    tabId === "guide");
   if (tabId === "schedule") renderSchedule();
   if (tabId === "flow") {
     const f = document.getElementById("flowFrame");
