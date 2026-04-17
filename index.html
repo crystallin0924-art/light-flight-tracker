@@ -95,6 +95,97 @@ body {
 .admin-btn:hover { border-color: var(--gold-soft); color: var(--gold-soft); }
 .admin-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
 
+.publish-btn {
+  display: none;
+  background: var(--sage);
+  border: none;
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+  width: 100%;
+}
+.publish-btn:hover { background: var(--sage-soft); color: var(--text); }
+
+/* Publish Modal */
+.pub-modal-bg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.pub-modal-bg.visible { display: flex; }
+.pub-modal-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.pub-modal-box h3 { font-size: 17px; margin-bottom: 6px; color: var(--dark); }
+.pub-modal-box .pub-desc { font-size: 13px; color: var(--text-mid); margin-bottom: 16px; line-height: 1.6; }
+.pub-steps { counter-reset: step; margin-bottom: 18px; }
+.pub-step { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+.pub-step-num { background: var(--gold); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.pub-step-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+.pub-step-text strong { color: var(--dark); }
+.pub-copy-area {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--text-mid);
+  font-family: monospace;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+.pub-btn-row { display: flex; gap: 10px; }
+.pub-copy-btn {
+  flex: 1;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pub-copy-btn:hover { background: var(--gold-soft); color: var(--dark); }
+.pub-close-btn {
+  background: var(--border);
+  color: var(--text-mid);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pub-notion-hint {
+  margin-top: 14px;
+  background: #f0f7ff;
+  border-left: 3px solid #4a90d9;
+  padding: 10px 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: #2a5080;
+  line-height: 1.6;
+}
+
 .overall-progress {
   background: rgba(255,255,255,0.05);
   border-radius: 10px;
@@ -811,7 +902,10 @@ body {
         <h1>《光的飛行航程》製作進度追蹤</h1>
         <div class="sub">光種子 Light Seed IP × 兒童光團隊 · 2026</div>
       </div>
-      <button class="admin-btn" id="adminBtn" onclick="openAdmin()">🔒 管理員</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <button class="admin-btn" id="adminBtn" onclick="openAdmin()">🔒 管理員</button>
+        <button class="publish-btn" id="publishBtn" onclick="showPublish()">📤 發布進度給老師</button>
+      </div>
     </div>
     <div class="overall-progress">
       <div class="progress-meta">
@@ -887,6 +981,25 @@ body {
   </div>
 
 </main>
+
+<!-- ══ PUBLISH MODAL ══ -->
+<div class="pub-modal-bg" id="pubModal">
+  <div class="pub-modal-box">
+    <h3>📤 發布最新進度</h3>
+    <p class="pub-desc">將目前的製作進度同步到 Notion，讓老師們（包含大陸）都能看到最新狀態。</p>
+    <div class="pub-steps">
+      <div class="pub-step"><div class="pub-step-num">1</div><div class="pub-step-text">點下方「複製進度資料」按鈕</div></div>
+      <div class="pub-step"><div class="pub-step-num">2</div><div class="pub-step-text">到 Claude 對話框，貼上資料並說：<br><strong>「請幫我同步進度到 Notion」</strong></div></div>
+      <div class="pub-step"><div class="pub-step-num">3</div><div class="pub-step-text">Claude 自動更新 Notion 看板，老師刷新 Notion 頁面就能看到 ✅</div></div>
+    </div>
+    <div class="pub-copy-area" id="pubDataArea">載入中…</div>
+    <div class="pub-btn-row">
+      <button class="pub-copy-btn" onclick="copyPubData()">📋 複製進度資料</button>
+      <button class="pub-close-btn" onclick="closePub()">關閉</button>
+    </div>
+    <div class="pub-notion-hint">📌 老師的 Notion 看板連結（大陸可開）：<br><a href="https://www.notion.so/345d110ab5628131a973e0c9eb5de975" target="_blank" style="color:#2a5080;font-weight:600;">📊 製作進度看板 · 老師專用</a></div>
+  </div>
+</div>
 
 <!-- ══ ADMIN MODAL ══ -->
 <div class="modal-bg" id="adminModal">
@@ -1520,12 +1633,40 @@ function enableFlowEditing(iframe) {
 //  ADMIN
 // ══════════════════════════════════════════
 
+function showPublish() {
+  const area = document.getElementById("pubDataArea");
+  // Build a human-readable + Claude-friendly progress summary
+  const summary = {
+    exportTime: new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"}),
+    checkedSteps: S.checked,
+    customSteps: S.customSteps,
+    schedule: S.schedule,
+    meetingNames: S.meetingNames,
+  };
+  area.textContent = JSON.stringify(summary, null, 2);
+  document.getElementById("pubModal").classList.add("visible");
+}
+
+function closePub() {
+  document.getElementById("pubModal").classList.remove("visible");
+}
+
+function copyPubData() {
+  const area = document.getElementById("pubDataArea");
+  navigator.clipboard.writeText(area.textContent).then(() => {
+    const btn = document.querySelector(".pub-copy-btn");
+    btn.textContent = "✅ 已複製！";
+    setTimeout(() => { btn.textContent = "📋 複製進度資料"; }, 2000);
+  });
+}
+
 function openAdmin() {
   if (S.adminMode) {
     S.adminMode = false;
     const btn = document.getElementById("adminBtn");
     btn.textContent = "🔒 管理員";
     btn.classList.remove("active");
+    document.getElementById("publishBtn").style.display = "none";
     renderAll();
     return;
   }
@@ -1548,6 +1689,7 @@ function doLogin() {
     const btn = document.getElementById("adminBtn");
     btn.textContent = "🔓 管理員模式中";
     btn.classList.add("active");
+    document.getElementById("publishBtn").style.display = "block";
     closeAdmin();
     renderAll();
   } else {
