@@ -985,19 +985,18 @@ body {
 <!-- ══ PUBLISH MODAL ══ -->
 <div class="pub-modal-bg" id="pubModal">
   <div class="pub-modal-box">
-    <h3>📤 發布最新進度</h3>
-    <p class="pub-desc">將目前的製作進度同步到 Notion，讓老師們（包含大陸）都能看到最新狀態。</p>
+    <h3>📤 發布最新進度給老師</h3>
+    <p class="pub-desc">老師們打開追蹤系統網址，就會自動看到你發布的最新進度。</p>
     <div class="pub-steps">
-      <div class="pub-step"><div class="pub-step-num">1</div><div class="pub-step-text">點下方「複製進度資料」按鈕</div></div>
-      <div class="pub-step"><div class="pub-step-num">2</div><div class="pub-step-text">到 Claude 對話框，貼上資料並說：<br><strong>「請幫我同步進度到 Notion」</strong></div></div>
-      <div class="pub-step"><div class="pub-step-num">3</div><div class="pub-step-text">Claude 自動更新 Notion 看板，老師刷新 Notion 頁面就能看到 ✅</div></div>
+      <div class="pub-step"><div class="pub-step-num">1</div><div class="pub-step-text">點下方「下載進度檔案」— 電腦會自動下載一個 <strong>state.json</strong> 檔案</div></div>
+      <div class="pub-step"><div class="pub-step-num">2</div><div class="pub-step-text">到 <strong>GitHub</strong> repository，把 state.json 上傳進去（跟上傳 html 一樣的方式）</div></div>
+      <div class="pub-step"><div class="pub-step-num">3</div><div class="pub-step-text">老師們重新整理追蹤系統頁面 → 自動看到你最新的進度 ✅</div></div>
     </div>
-    <div class="pub-copy-area" id="pubDataArea">載入中…</div>
     <div class="pub-btn-row">
-      <button class="pub-copy-btn" onclick="copyPubData()">📋 複製進度資料</button>
+      <button class="pub-copy-btn" onclick="downloadState()">⬇️ 下載進度檔案 (state.json)</button>
       <button class="pub-close-btn" onclick="closePub()">關閉</button>
     </div>
-    <div class="pub-notion-hint">📌 老師的 Notion 看板連結（大陸可開）：<br><a href="https://www.notion.so/345d110ab5628131a973e0c9eb5de975" target="_blank" style="color:#2a5080;font-weight:600;">📊 製作進度看板 · 老師專用</a></div>
+    <div class="pub-notion-hint">📌 老師們的網址：<br><a href="https://crystallin0924-art.github.io/light-flight-tracker/" target="_blank" style="color:#2a5080;font-weight:600;">🌐 光的飛行航程 · 製作進度追蹤</a></div>
   </div>
 </div>
 
@@ -1634,16 +1633,6 @@ function enableFlowEditing(iframe) {
 // ══════════════════════════════════════════
 
 function showPublish() {
-  const area = document.getElementById("pubDataArea");
-  // Build a human-readable + Claude-friendly progress summary
-  const summary = {
-    exportTime: new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"}),
-    checkedSteps: S.checked,
-    customSteps: S.customSteps,
-    schedule: S.schedule,
-    meetingNames: S.meetingNames,
-  };
-  area.textContent = JSON.stringify(summary, null, 2);
   document.getElementById("pubModal").classList.add("visible");
 }
 
@@ -1651,13 +1640,43 @@ function closePub() {
   document.getElementById("pubModal").classList.remove("visible");
 }
 
-function copyPubData() {
-  const area = document.getElementById("pubDataArea");
-  navigator.clipboard.writeText(area.textContent).then(() => {
-    const btn = document.querySelector(".pub-copy-btn");
-    btn.textContent = "✅ 已複製！";
-    setTimeout(() => { btn.textContent = "📋 複製進度資料"; }, 2000);
-  });
+function downloadState() {
+  const data = JSON.stringify({
+    checked: S.checked,
+    customText: S.customText,
+    schedule: S.schedule,
+    customSteps: S.customSteps,
+    customStepsNext: S.customStepsNext,
+    flowText: S.flowText,
+    meetingNames: S.meetingNames,
+    stepOrder: S.stepOrder,
+    _publishedAt: new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"}),
+  }, null, 2);
+  const blob = new Blob([data], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "state.json"; a.click();
+  URL.revokeObjectURL(url);
+  const btn = document.querySelector(".pub-copy-btn");
+  btn.textContent = "✅ 已下載！記得上傳到 GitHub";
+  setTimeout(() => { btn.textContent = "⬇️ 下載進度檔案 (state.json)"; }, 3000);
+}
+
+async function loadSharedState() {
+  try {
+    const res = await fetch("./state.json?t=" + Date.now());
+    if (!res.ok) return;
+    const shared = await res.json();
+    // Shared state from GitHub overrides local for viewers
+    if (shared.checked)        S.checked        = shared.checked;
+    if (shared.customText)     S.customText     = shared.customText;
+    if (shared.schedule)       S.schedule       = shared.schedule;
+    if (shared.customSteps)    S.customSteps    = shared.customSteps;
+    if (shared.customStepsNext)S.customStepsNext= shared.customStepsNext;
+    if (shared.flowText)       S.flowText       = shared.flowText;
+    if (shared.meetingNames)   S.meetingNames   = shared.meetingNames;
+    if (shared.stepOrder)      S.stepOrder      = shared.stepOrder;
+  } catch(e) {}
 }
 
 function openAdmin() {
@@ -2140,8 +2159,11 @@ function initEpSchedule(epId, startDate) {
 // ══════════════════════════════════════════
 
 initState();
-renderAll();      // renders grid + stats
-renderSchedule(); // schedule is the default tab
+// 嘗試從 GitHub 讀取沛儀發布的共享進度，成功後重新渲染
+loadSharedState().then(() => {
+  renderAll();
+  renderSchedule();
+});
 </script>
 </body>
 </html>
