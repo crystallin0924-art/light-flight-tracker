@@ -1021,7 +1021,7 @@ const ADMIN_PWD = "0924";   // ← 管理員密碼（可修改）
 
 const EPISODES = [
   { id:0,  name:"光種子",  keyword:"最初的最初",             teacher:"沛儀"      },
-  { id:1,  name:"白光",    keyword:"淨化、保護",              teacher:"圓清"      },
+  { id:1,  name:"白光",    keyword:"淨化、保護",              teacher:"圓清（明清）" },
   { id:2,  name:"金光",    keyword:"轉化、目標完成",           teacher:"明心"      },
   { id:3,  name:"藍光",    keyword:"智慧",                    teacher:"白老師"    },
   { id:4,  name:"綠寶石",  keyword:"創造、溝通",              teacher:"栗子 Liz" },
@@ -1208,10 +1208,10 @@ function renderGrid() {
     const isOpen = S.openEp === ep.id;
     const displayTeacher = S.teacherNames[ep.id] !== undefined ? S.teacherNames[ep.id] : ep.teacher;
     const teacherHtml = S.adminMode
-      ? `<input class="meeting-name-input" value="${displayTeacher}" placeholder="帶領老師名稱"
+      ? `<input class="meeting-name-input" value="${displayTeacher}" placeholder="帶領者名稱"
            onclick="event.stopPropagation()"
            onchange="editTeacherName(${ep.id},this.value)">`
-      : `<div class="ep-teacher">帶領老師：${displayTeacher}</div>`;
+      : `<div class="ep-teacher">帶領者：${displayTeacher}</div>`;
     return `
 <div class="ep-card status-${st} ${isOpen ? "is-open" : ""}" onclick="selectEp(${ep.id})">
   <div class="ep-top">
@@ -1367,7 +1367,7 @@ function renderDetail(epId) {
   <div class="detail-badge">${ep.id}</div>
   <div class="detail-title">
     <h2>${ep.name}</h2>
-    <div class="meta">${ep.keyword} · 帶領老師：${ep.teacher}</div>
+    <div class="meta">${ep.keyword} · 帶領者：${S.teacherNames[ep.id] !== undefined ? S.teacherNames[ep.id] : ep.teacher}</div>
   </div>
   <div class="detail-pct-wrap">
     <div class="detail-pct">${pct}%</div>
@@ -1383,7 +1383,7 @@ function renderDetail(epId) {
     <div class="done-banner-icon">✨</div>
     <div class="done-banner-text">
       <h4>這一集完成了！</h4>
-      <p>恭喜 ${ep.name} · ${ep.teacher} ，太棒了！</p>
+      <p>恭喜 ${ep.name} · ${S.teacherNames[ep.id] !== undefined ? S.teacherNames[ep.id] : ep.teacher} ，太棒了！</p>
     </div>
   </div>
   ${phasesHtml}
@@ -2110,7 +2110,7 @@ function renderSchedule() {
     <div class="ep-badge" style="${badgeStyle}">${ep.id}</div>
     <div class="schedule-ep-head-info">
       <div class="schedule-ep-head-name">${ep.name}</div>
-      <div class="schedule-ep-head-sub">${ep.keyword} · 帶領老師：${ep.teacher}</div>
+      <div class="schedule-ep-head-sub">${ep.keyword} · 帶領者：${S.teacherNames[ep.id] !== undefined ? S.teacherNames[ep.id] : ep.teacher}</div>
     </div>
   </div>
   <div class="schedule-meetings">${meetingsHtml}</div>
