@@ -1087,6 +1087,7 @@ let S = {
   flowText: {},          // data-fk key → edited text (for 流程說明 admin editing)
   meetingNames: {},      // meeting index (0-3) → custom name string
   stepOrder: {},         // phId → ordered array of step IDs (numbers/strings)
+  teacherNames: {},      // ep.id → custom teacher display name
 };
 
 function initState() {
@@ -1102,6 +1103,7 @@ function initState() {
       S.flowText         = d.flowText         || {};
       S.meetingNames     = d.meetingNames     || {};
       S.stepOrder        = d.stepOrder        || {};
+      S.teacherNames     = d.teacherNames     || {};
       // Apply custom texts back to PHASES
       Object.entries(S.customText).forEach(([k, v]) => {
         const m = k.match(/ph(\d+)_s(\d+)/);
@@ -1136,6 +1138,7 @@ function persist() {
       flowText: S.flowText,
       meetingNames: S.meetingNames,
       stepOrder: S.stepOrder,
+      teacherNames: S.teacherNames,
     }));
   } catch(e) {}
 }
@@ -1203,13 +1206,19 @@ function renderGrid() {
     const st = epStatus(ep.id);
     const badgeTxt = st === "done" ? "● 已完成" : st === "active" ? "● 進行中" : "未開始";
     const isOpen = S.openEp === ep.id;
+    const displayTeacher = S.teacherNames[ep.id] !== undefined ? S.teacherNames[ep.id] : ep.teacher;
+    const teacherHtml = S.adminMode
+      ? `<input class="meeting-name-input" value="${displayTeacher}" placeholder="帶領老師名稱"
+           onclick="event.stopPropagation()"
+           onchange="editTeacherName(${ep.id},this.value)">`
+      : `<div class="ep-teacher">帶領老師：${displayTeacher}</div>`;
     return `
 <div class="ep-card status-${st} ${isOpen ? "is-open" : ""}" onclick="selectEp(${ep.id})">
   <div class="ep-top">
     <div class="ep-badge">${ep.id}</div>
     <div class="ep-info">
       <div class="ep-name">${ep.name}</div>
-      <div class="ep-teacher">${ep.teacher}</div>
+      ${teacherHtml}
       <div class="ep-keyword">${ep.keyword}</div>
     </div>
   </div>
@@ -1632,6 +1641,12 @@ function enableFlowEditing(iframe) {
 //  ADMIN
 // ══════════════════════════════════════════
 
+function editTeacherName(epId, val) {
+  if (val && val.trim()) { S.teacherNames[epId] = val.trim(); }
+  else { delete S.teacherNames[epId]; }
+  persist();
+}
+
 function showPublish() {
   document.getElementById("pubModal").classList.add("visible");
 }
@@ -1650,6 +1665,7 @@ function downloadState() {
     flowText: S.flowText,
     meetingNames: S.meetingNames,
     stepOrder: S.stepOrder,
+    teacherNames: S.teacherNames,
     _publishedAt: new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"}),
   }, null, 2);
   const blob = new Blob([data], {type: "application/json"});
@@ -1676,6 +1692,7 @@ async function loadSharedState() {
     if (shared.flowText)       S.flowText       = shared.flowText;
     if (shared.meetingNames)   S.meetingNames   = shared.meetingNames;
     if (shared.stepOrder)      S.stepOrder      = shared.stepOrder;
+    if (shared.teacherNames)   S.teacherNames   = shared.teacherNames;
   } catch(e) {}
 }
 
