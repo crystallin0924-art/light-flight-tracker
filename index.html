@@ -767,10 +767,9 @@ body {
 .schedule-meetings {
   padding: 12px 16px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 8px;
 }
-@media (max-width: 860px) { .schedule-meetings { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .schedule-meetings { grid-template-columns: 1fr; } }
 
 .meeting-card {
@@ -818,6 +817,40 @@ body {
   cursor: pointer;
 }
 .meeting-date-input:focus { border-color: var(--gold); }
+
+/* ── Add / Remove meeting buttons ── */
+.btn-add-meeting {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 16px 14px;
+  background: none;
+  border: 1px dashed var(--gold-soft);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-add-meeting:hover { background: rgba(201,150,58,0.08); }
+
+.btn-remove-meeting {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  background: none;
+  border: 1px solid #f0c0b0;
+  border-radius: 5px;
+  padding: 2px 0;
+  font-size: 10px;
+  color: #c07a5a;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-remove-meeting:hover { background: #fff0ea; }
 
 .schedule-pending-section {
   margin-top: 14px;
@@ -1085,7 +1118,7 @@ let S = {
   openEp: null,
   activeTab: "schedule",
   flowText: {},          // data-fk key → edited text (for 流程說明 admin editing)
-  meetingNames: {},      // meeting index (0-3) → custom name string
+  meetingNames: {},      // "${epId}_${meetIdx}" → custom name string
   stepOrder: {},         // phId → ordered array of step IDs (numbers/strings)
   teacherNames: {},      // ep.id → custom teacher display name
 };
@@ -2074,10 +2107,13 @@ function renderSchedule() {
     const badgeStyle = epSt === "done"   ? "background:var(--gold);color:#fff"
                      : epSt === "active" ? "background:var(--sage);color:#fff" : "";
 
-    const meetingsHtml = MEETING_NAMES.map((mName, i) => {
+    // 以實際儲存的 dates 長度為準，至少顯示 1 張卡（若還沒設定）
+    const meetCount = Math.max(dates.length, 1);
+    const meetingsHtml = Array.from({ length: meetCount }, (_, i) => {
       const d      = dates[i] || null;
       const status = meetingStatus(d);
-      const displayName = S.meetingNames[i] || mName;
+      const defaultName = MEETING_NAMES[i] || `Meeting ${i + 1}`;
+      const displayName = S.meetingNames[`${ep.id}_${i}`] || defaultName;
 
       const dateHtml = d
         ? `<div class="meeting-date">${formatDate(d)}</div>
@@ -2086,12 +2122,16 @@ function renderSchedule() {
 
       const nameHtml = S.adminMode
         ? `<input class="meeting-name-input" value="${displayName}"
-             placeholder="會議名稱" onchange="editMeetingName(${i},this.value)">`
+             placeholder="會議名稱" onchange="editMeetingName(${ep.id},${i},this.value)">`
         : `<div class="meeting-name">${displayName}</div>`;
 
       const editHtml = S.adminMode
         ? `<input type="date" class="meeting-date-input" value="${d || ""}"
              title="點擊修改日期" onchange="setMeetingDate(${ep.id},${i},this.value)">`
+        : "";
+
+      const removeHtml = S.adminMode
+        ? `<button class="btn-remove-meeting" onclick="removeMeeting(${ep.id},${i})">✕ 刪除此場</button>`
         : "";
 
       return `
@@ -2101,8 +2141,13 @@ function renderSchedule() {
   ${dateHtml}
   <div class="meeting-status-badge ${STATUS_BADGE[status]}">${STATUS_LABEL[status]}</div>
   ${editHtml}
+  ${removeHtml}
 </div>`;
     }).join("");
+
+    const addBtnHtml = S.adminMode
+      ? `<button class="btn-add-meeting" onclick="addMeeting(${ep.id})">＋ 新增會議</button>`
+      : "";
 
     html += `
 <div class="schedule-ep-row">
@@ -2114,6 +2159,7 @@ function renderSchedule() {
     </div>
   </div>
   <div class="schedule-meetings">${meetingsHtml}</div>
+  ${addBtnHtml}
 </div>`;
   });
 
@@ -2144,17 +2190,18 @@ function renderSchedule() {
 }
 
 function setMeetingDate(epId, meetIdx, dateStr) {
-  if (!S.schedule[epId]) S.schedule[epId] = [null, null, null, null];
+  if (!S.schedule[epId]) S.schedule[epId] = [];
   S.schedule[epId][meetIdx] = dateStr || null;
   persist();
   renderSchedule();
 }
 
-function editMeetingName(meetIdx, val) {
+function editMeetingName(epId, meetIdx, val) {
+  const key = `${epId}_${meetIdx}`;
   if (val && val.trim()) {
-    S.meetingNames[meetIdx] = val.trim();
+    S.meetingNames[key] = val.trim();
   } else {
-    delete S.meetingNames[meetIdx]; // revert to default
+    delete S.meetingNames[key]; // revert to default
   }
   persist();
   // also refresh the flow frame so meeting labels there stay in sync
@@ -2162,6 +2209,36 @@ function editMeetingName(meetIdx, val) {
     const f = document.getElementById("flowFrame");
     if (f) { f.srcdoc = buildFlowHtml(); }
   }
+}
+
+function addMeeting(epId) {
+  if (!S.schedule[epId]) S.schedule[epId] = [];
+  S.schedule[epId].push(null); // 新增一個空白日期的會議
+  persist();
+  renderSchedule();
+}
+
+function removeMeeting(epId, idx) {
+  if (!S.schedule[epId]) return;
+  S.schedule[epId].splice(idx, 1);
+  // 同步清理 meetingNames，把後面的 index 往前移
+  const remaining = {};
+  Object.keys(S.meetingNames).forEach(k => {
+    const parts = k.split("_");
+    const kEpId = parseInt(parts[0]);
+    const kIdx  = parseInt(parts[1]);
+    if (kEpId !== epId) {
+      remaining[k] = S.meetingNames[k]; // 其他集數不動
+    } else if (kIdx < idx) {
+      remaining[k] = S.meetingNames[k]; // 前面的保留
+    } else if (kIdx > idx) {
+      remaining[`${epId}_${kIdx - 1}`] = S.meetingNames[k]; // 後面的往前移
+    }
+    // kIdx === idx → 刪除，不加入
+  });
+  S.meetingNames = remaining;
+  persist();
+  renderSchedule();
 }
 
 function initEpSchedule(epId, startDate) {
