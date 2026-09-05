@@ -933,7 +933,7 @@ body {
       <div class="header-title">
         <div class="en">Light Flight · Production Tracker</div>
         <h1>《光的飛行航程》製作進度追蹤</h1>
-        <div class="sub">光種子 Light Seed IP × 兒童光團隊 · 2026</div>
+        <div class="sub">光種子 Light Seed IP × 兒童光團隊 · 2026 <span style="opacity:0.4;font-size:9px;">v2.2</span></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <button class="admin-btn" id="adminBtn" onclick="openAdmin()">🔒 管理員</button>
@@ -1212,7 +1212,6 @@ function initState() {
     if (raw) {
       const d = JSON.parse(raw);
       S.checked          = d.checked          || {};
-      S.customText       = d.customText       || {};
       S.schedule         = d.schedule         || {};
       S.customSteps      = d.customSteps      || [];
       S.customStepsNext  = d.customStepsNext  || 1;
@@ -1220,8 +1219,18 @@ function initState() {
       S.meetingNames     = d.meetingNames     || {};
       S.stepOrder        = d.stepOrder        || {};
       S.teacherNames     = d.teacherNames     || {};
-      // 各集步驟文字已改為 per-episode 儲存（ep{epId}_ph{phId}_s{stId}）
-      // 不再需要套回 PHASES，直接在 renderDetail 時動態讀取
+
+      // 只載入新格式的 customText（key 必須以 "ep" 開頭）
+      // 過濾掉舊格式（ph{id}_s{id}）避免污染
+      const rawCT = d.customText || {};
+      S.customText = {};
+      for (const [k, v] of Object.entries(rawCT)) {
+        if (k.startsWith("ep")) {
+          S.customText[k] = v;
+        } else {
+          console.log(`[initState] 過濾舊格式 key: "${k}" (已忽略)`);
+        }
+      }
     }
   } catch(e) {}
 
@@ -1572,6 +1581,7 @@ function toggleStep(epId, stepId) {
 function editText(epId, phId, stId, val) {
   // 改為 per-episode 儲存，不再修改共用的 PHASES
   const key = `ep${epId}_ph${phId}_s${stId}`;
+  console.log(`[editText] 儲存: key="${key}", 值="${val.trim()}"`);
   if (val && val.trim() !== "") {
     S.customText[key] = val;
   } else {
@@ -1798,7 +1808,13 @@ async function loadSharedState() {
     const shared = await res.json();
     // Shared state from GitHub overrides local for viewers
     if (shared.checked)        S.checked        = shared.checked;
-    if (shared.customText)     S.customText     = shared.customText;
+    if (shared.customText) {
+      // 只套用新格式 key（ep 開頭），過濾舊格式
+      S.customText = {};
+      for (const [k, v] of Object.entries(shared.customText)) {
+        if (k.startsWith("ep")) S.customText[k] = v;
+      }
+    }
     if (shared.schedule)       S.schedule       = shared.schedule;
     if (shared.customSteps)    S.customSteps    = shared.customSteps;
     if (shared.customStepsNext)S.customStepsNext= shared.customStepsNext;
